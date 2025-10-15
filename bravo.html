@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bravo's Compass - Welcome!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            background-color: #f3f4f6; /* Default gray background */
+        }
+
+        /* New background element for the color transition */
+        #transition-bg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #EAB308; /* Golden compass color */
+            opacity: 0;
+            z-index: -1; /* Place it behind all other content */
+        }
+        
+        /* The main image of Bravo */
+        #bravo-img {
+            transition: filter 0.3s ease, transform 0.3s ease;
+            animation: idleAnimation 4s ease-in-out infinite;
+        }
+
+        /* The clickable area for the compass */
+        #compass-btn {
+            cursor: pointer;
+            position: absolute;
+            top: 78%;
+            left: 50%;
+            width: 28%;
+            height: 28%;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        /* Hover effect applied to the image when hovering the compass */
+        .bravo-hover-effect {
+            filter: drop-shadow(0 0 20px rgba(251, 191, 36, 0.9));
+            transform: scale(1.05);
+        }
+        
+        /* Class to trigger the zoom effect */
+        .zoom-effect {
+            /* Sets the zoom origin to the center of the compass */
+            transform-origin: 50% 78%;
+            animation: zoomInToCompass 1s forwards cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Class to trigger the background color fade */
+        .bg-fade-in {
+            animation: bgFadeIn 1s forwards;
+        }
+
+        .text-fade-out {
+            animation: textFade 0.5s forwards;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* The zoom animation */
+        @keyframes zoomInToCompass {
+            from {
+                transform: scale(1) translateY(0);
+                opacity: 1;
+            }
+            to {
+                /* Scale up massively and adjust Y position to keep compass centered */
+                transform: scale(15) translateY(-25%);
+                opacity: 0;
+            }
+        }
+        
+        @keyframes textFade {
+             from { opacity: 1; }
+             to { opacity: 0; }
+        }
+
+        @keyframes bgFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        /* Idle animation for the dog image */
+        @keyframes idleAnimation {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-12px);
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center h-screen">
+
+    <div id="transition-bg"></div>
+
+    <div id="intro-screen" class="text-center p-8 w-full max-w-2xl mx-auto">
+        <!-- Container for the dog image and the clickable compass button -->
+        <div class="mb-6 relative w-80 h-80 md:w-96 md:h-96 mx-auto">
+            <!-- Replace the src with your image URL -->
+            <img id="bravo-img" src="Bravo Transparent.png" alt="Bravo the dog mascot" class="w-full h-full object-contain">
+            
+            <!-- This is the invisible button placed over the compass -->
+            <div id="compass-btn"></div>
+        </div>
+        
+        <!-- Welcome Text -->
+        <div id="welcome-text">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">Bravo's Compass</h1>
+            <p class="text-lg md:text-xl text-gray-500">Let Bravo guide your way!</p>
+            <p class="text-md text-gray-400 mt-4">Click the compass on his collar to begin.</p>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="text-center p-8 w-full max-w-lg mx-auto hidden">
+        <h2 class="text-3xl font-bold text-gray-700" style="color: white;">Finding the best path...</h2>
+        <p class="text-lg mt-2" style="color: rgba(255, 255, 255, 0.8);">Our best boy is on the case!</p>
+    </div>
+
+
+    <script>
+        const compassButton = document.getElementById('compass-btn');
+        const bravoImage = document.getElementById('bravo-img');
+        const introScreen = document.getElementById('intro-screen');
+        const loadingScreen = document.getElementById('loading-screen');
+        const welcomeText = document.getElementById('welcome-text');
+        const transitionBg = document.getElementById('transition-bg');
+
+        if (compassButton && bravoImage && introScreen && welcomeText && transitionBg) {
+            // Add hover effects via JavaScript
+            compassButton.addEventListener('mouseenter', () => {
+                bravoImage.classList.add('bravo-hover-effect');
+            });
+            compassButton.addEventListener('mouseleave', () => {
+                bravoImage.classList.remove('bravo-hover-effect');
+            });
+
+            // Handle the click event
+            compassButton.addEventListener('click', () => {
+                // Disable hover effects and make button unclickable
+                bravoImage.classList.remove('bravo-hover-effect');
+                compassButton.style.pointerEvents = 'none';
+
+                // Fade out the text, start the zoom, and fade in the background color
+                welcomeText.classList.add('text-fade-out');
+                introScreen.classList.add('zoom-effect');
+                transitionBg.classList.add('bg-fade-in');
+
+
+                // Wait for the animation to finish
+                setTimeout(() => {
+                    introScreen.classList.add('hidden');
+                    loadingScreen.classList.remove('hidden');
+                    loadingScreen.classList.add('fade-in');
+                    
+                    // Here you would typically navigate to the next page
+                    console.log("Navigating to the main map page...");
+
+                }, 1000); // This timeout should match the zoom animation duration
+            });
+        } else {
+            console.warn('One or more required elements not found.');
+        }
+    </script>
+</body>
+</html>
+
