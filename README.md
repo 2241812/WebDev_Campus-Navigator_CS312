@@ -1,9 +1,11 @@
-# 🧭 Bravo's Compass — Animated Welcome Screen
+# 🧭 Bravo's Compass — Animated Welcome Screen | Draft of a Campus Navigation System
 
 Welcome to **Bravo's Compass!**  
 This is a dynamic and visually engaging **welcome screen** for a web application, designed to create a memorable first impression for users.  
 
-The screen features an **animated mascot, "Bravo,"** who guides the user into the main application through a unique **zoom-in-to-compass transition**.
+The screen features an **animated mascot, "Bravo,"** who guides the user into the main application through a unique **zoom-in-to-compass transition.**
+
+> ⚡ A portion of the web development phase was *vibe coded* — to streamline development, and the transition to this kind of power.  
 
 ---
 
@@ -16,7 +18,7 @@ The screen features an **animated mascot, "Bravo,"** who guides the user into th
   When the user hovers over the compass on Bravo’s collar, the mascot scales up slightly with a golden glow, indicating interactivity.  
 
 - **Immersive Zoom Transition:**  
-  Clicking the compass triggers a full-screen zoom focused on the compass, transitioning the background to a warm gold before revealing the loading screen.   
+  Clicking the compass triggers a full-screen zoom focused on the compass, transitioning the background to a warm gold before revealing the loading screen.  
 
 - **Pure Front-End:**  
   Self-contained in a single `index.html` file — no frameworks or complex dependencies required.  
