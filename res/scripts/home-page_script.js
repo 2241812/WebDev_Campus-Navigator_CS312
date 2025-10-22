@@ -39,7 +39,7 @@
                     // before navigation happens.
                     setTimeout(() => {
                         console.log("Navigating to the main map page (main map page.html)...");
-                        window.location.href = 'test.html';
+                        window.location.href = 'mainpage.html';
                     }, 2000); // 2-second total delay from click
                 });
             } else {
