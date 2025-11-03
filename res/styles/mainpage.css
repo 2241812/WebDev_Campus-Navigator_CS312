@@ -13,8 +13,8 @@ body {
     cursor: move; 
 }
 .room { 
-    fill: #4a5568; 
-    stroke: #e2e8f0; 
+    fill: #677ca0; 
+    stroke: #000000; 
 }
 .hallway { 
     fill: #a0aec0; 
@@ -71,4 +71,69 @@ body {
 /* Hide default file input */
 #importMapInput { 
     display: none; 
+}
+
+/* --- DRAGGING STYLES --- */
+body.is-dragging {
+    cursor: grabbing;
+    user-select: none;
+    -webkit-user-select: none; /* For Safari */
+}
+
+body.is-dragging .node {
+    pointer-events: none;
+}
+
+body.is-dragging .node.selected-for-action {
+    stroke: #3498db;
+    stroke-width: 3;
+}
+
+/* --- ROLE & PATH SELECTION --- */
+
+/* Role Buttons */
+.role-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem; /* rounded-md */
+    font-size: 0.875rem; /* text-sm */
+    font-weight: 500; /* font-medium */
+    background-color: #4A5568; /* bg-gray-700 */
+    color: #E2E8F0; /* text-gray-300 */
+    transition: all 0.2s ease;
+}
+.role-btn:hover {
+    background-color: #718096; /* bg-gray-600 */
+}
+.role-btn.active {
+    background-color: #3182CE; /* bg-blue-600 */
+    color: white;
+    box-shadow: 0 0 0 2px #4A5568;
+}
+
+/* Path Selection */
+.node.path-selectable:hover {
+    cursor: crosshair;
+    stroke: #F6AD55; /* orange-400 */
+    stroke-width: 4;
+}
+.node.start-node-selected {
+    stroke: #68D391; /* green-400 */
+    stroke-width: 4;
+    fill: #38A169; /* green-600 */
+}
+.node.end-node-selected {
+    stroke: #F56565; /* red-400 */
+    stroke-width: 4;
+    fill: #C53030; /* red-600 */
+}
+
+/* --- NEW LEGEND STYLES --- */
+#mapLegend.collapsed #mapLegendContent {
+    max-height: 0;
+    margin-top: 0;
+    opacity: 0;
+}
+
+#mapLegend.collapsed #legendToggleIcon {
+    transform: rotate(-90deg);
 }
