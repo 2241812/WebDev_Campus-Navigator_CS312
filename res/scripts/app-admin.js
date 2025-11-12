@@ -5,11 +5,12 @@ App.AdminEditor = {
     draggedNodeId: null,
     
     adminDOMElements: {
-       addFloorBtn: document.getElementById('addFloorBtn'),
+        addFloorBtn: document.getElementById('addFloorBtn'),
         deleteFloorBtn: document.getElementById('deleteFloorBtn'),
         setFloorLabelBtn: document.getElementById('setFloorLabelBtn'),
         importMapInput: document.getElementById('importMapInput'),
         exportMapBtn: document.getElementById('exportMapBtn'),
+        adminAddBtns: document.querySelectorAll('.admin-add-btn')
         saveToDbBtn: document.getElementById('saveToDbBtn'), //
     },
 

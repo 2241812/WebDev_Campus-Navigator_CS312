@@ -4,7 +4,8 @@ $conn = new mysqli("localhost", "root", "", "graphDB");
 if ($conn->connect_error) die("Connection failed: " . $conn->connect_error);
 
 // Load JSON data
-$jsonData = file_get_contents('school_map_data.json');
+// FIX 1: Correct path to find the JSON file
+$jsonData = file_get_contents('../../school_map_data.json');
 $data = json_decode($jsonData, true);
 
 // Insert nodes
@@ -17,8 +18,10 @@ if (isset($data['nodes'])) {
 
     foreach ($data['nodes'] as $node) {
         $access = isset($node['access']) ? $node['access'] : NULL;
+        
+        // FIX 2: Correct type string (13 letters for 13 variables)
         $stmt->bind_param(
-            "sssiiissssss",
+            "sssiiisssiiis",
             $node['id'],
             $node['name'],
             $node['type'],
