@@ -469,7 +469,7 @@ function initializeApp() {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    fetch('school_map_data.json')
+    fetch('getData.php')
         .then(response => {
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
