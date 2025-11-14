@@ -11,14 +11,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     
-    <link rel="stylesheet" href="/res/styles/mainpage.css">
+    <link rel="stylesheet" href="res/styles/mainpage.css?v=2">
 </head>
 
 <body class="bg-gray-900 text-white flex flex-col items-center min-h-screen p-4 md:p-6 space-y-6 antialiased">
 
-    <h1 class="text-3xl font-bold text-white mb-0">School Navigator</h1>
-    <p class="text-gray-400">Find the shortest path in Building D.</p>
-    
+    <h1 class="text-3xl font-bold text-white mb-0">Bravo's Compass</h1>
+
     <div id="floorSelector" class="flex space-x-2 flex-shrink-0"></div>
     
     <div id="mainContentWrapper" class="w-full max-w-7xl flex flex-col md:flex-row justify-center gap-6">
@@ -72,15 +71,17 @@
                 </button>
                 
             </div>
-        </div> <div id="mapContainer" class="w-full max-w-4xl max-h-[75vh] aspect-video bg-gray-800 rounded-lg shadow-inner border border-gray-700 flex-shrink-0">
+        </div>
+        
+        <div id="mapContainer" class="w-full max-w-4xl max-h-[75vh] aspect-video bg-gray-800 rounded-lg shadow-inner border border-gray-700 flex-shrink-0">
             <svg id="mapSvg" width="100%" height="100%" viewBox="0 0 800 500"></svg>
-             
-             <div id="mapLegend" class="absolute bottom-2 left-2 bg-gray-900 bg-opacity-70 p-2 rounded-md text-xs text-gray-300">
+            
+            <div id="mapLegend" class="absolute bottom-2 left-2 bg-gray-900 bg-opacity-70 p-2 rounded-md text-xs text-gray-300 w-48 collapsed">
                 <div id="mapLegendHeader" class="font-semibold cursor-pointer flex justify-between items-center">
                     <span>Legend</span>
                     <span id="legendToggleIcon" class="ml-2 transform transition-transform duration-300">▼</span>
                 </div>
-                <div id="mapLegendContent" class="space-y-1 mt-1 transition-all duration-300 ease-in-out max-h-40 overflow-hidden">
+                <div id="mapLegendContent" class="space-y-1 transition-all duration-300 ease-in-out overflow-hidden">
                     <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-gray-700 mr-2 border border-gray-400"></span>Room</div>
                     <div class="flex items-center"><span class="w-3 h-3 rounded-full" style="background-color: #63b3ed;"></span>Stairs</div>
                     <div class="flex items-center"><span class="w-3 h-3 rounded-full" style="background-color: #f6ad55;"></span>Public Elevator</div>
@@ -90,7 +91,9 @@
             
         </div>
 
-    </div> <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-lg mt-6">
+    </div>
+    
+    <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-lg mt-6">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             
             <div class="space-y-4">
@@ -125,7 +128,9 @@
             </div>
 
         </div>
-    </div> <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    </div>
+    
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
         <div class="bg-gray-800 rounded-lg p-6 shadow-xl w-full max-w-sm">
             <h3 id="modalTitle" class="text-lg font-bold text-white">Confirm Action</h3>
             <p id="modalMessage" class="text-gray-300 mt-2">Are you sure?</p>
@@ -134,8 +139,10 @@
                 <button id="modalConfirmBtn" class="px-4 py-2 bg-red-600 hover:bg-red-500 rounded-md">Confirm</button>
             </div>
         </div>
-    </div> <script src="/res/scripts/app-main.js"></script>
-    <script src="/res/scripts/app-admin.js"></script>
+    </div> 
+    
+    <script src="res/scripts/app-main.js?v=2"></script>
+    <script src="res/scripts/app-admin.js?v=2"></script>
     
 </body>
 </html>
