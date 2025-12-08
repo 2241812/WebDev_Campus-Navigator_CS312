@@ -1,7 +1,7 @@
 window.App = window.App || {};
 
 App.AdminEditor = {
-    gridSize: 40,
+    gridSize: 5,
     draggedNodeId: null,
     shiftPressed: false,
     isDragging: false,
