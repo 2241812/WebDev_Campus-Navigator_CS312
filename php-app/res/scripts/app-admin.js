@@ -1,363 +1,321 @@
+window.App = window.App || {};
+
 App.AdminEditor = {
-    editMode: {
-        mode: null,
-        type: null,
-        access: null,
-        firstNodeId: null
+    gridSize: 40,
+    draggedNodeId: null,
+    shiftPressed: false,
+    isDragging: false,
+    offset: { x: 0, y: 0 },
+
+    defaultShortcuts: {
+        'add-room': 'r', 'add-hallway': 'h', 'add-stairs': 's',
+        'add-elevator-public': 'u', 'add-elevator-staff': 'i',
+        'connect': 'c', 'disconnect': 'x', 'delete': 'd',
+        'draw-path': 'p', 'rename': 'n', 'save': 'k', 'cancel': 'escape'
     },
 
-    isDragging: false,
-    dragAnimationFrame: null,
-    offset: { x: 0, y: 0 },
-    draggedNodeId: null,
+    shortcuts: {},
+
+    viewState: {
+        scale: 1, panX: 0, panY: 0, isPanning: false, startX: 0, startY: 0
+    },
+
+    editMode: {
+        mode: null, type: null, access: null, firstNodeId: null, lastAddedNodeId: null
+    },
 
     adminDOMElements: {
-        addFloorBtn: document.getElementById('addFloorBtn'),
-        deleteFloorBtn: document.getElementById('deleteFloorBtn'),
-        setFloorLabelBtn: document.getElementById('setFloorLabelBtn'),
-        importMapInput: document.getElementById('importMapInput'),
-        exportMapBtn: document.getElementById('exportMapBtn'),
-        adminAddBtns: document.querySelectorAll('.admin-add-btn'),
-        saveToDbBtn: document.getElementById('saveToDbBtn'),
-        mapSvg: document.getElementById('mapSvg'),
+        adminPanel: document.getElementById('adminPanel'),
         adminStatus: document.getElementById('adminStatus'),
-        
-        // NEW: Elements for Floor Plan Upload
+        zoomSlider: document.getElementById('zoomSlider'),
+        resetZoomBtn: document.getElementById('resetZoomBtn'),
+        mapSvg: document.getElementById('mapSvg'),
+        saveBtn: document.getElementById('saveToDbBtn'),
         uploadForm: document.getElementById('uploadForm'),
-        floorImageInput: document.getElementById('floorImageInput')
-    },
-    
-    constants: {
-        STATUS_COLORS: {
-            WARNING: "#F6AD55",
-            SUCCESS: "#68D391",
-            ERROR: "#F56565",
-            DEFAULT: ""
-        }
+        floorImageInput: document.getElementById('floorImageInput'),
+        btnOpenSettings: document.getElementById('btn-open-settings'),
+        shortcutModal: document.getElementById('shortcutModal'),
+        shortcutList: document.getElementById('shortcutList'),
+        btnCloseSettings: document.getElementById('btnCloseSettings'),
+        btnSaveShortcuts: document.getElementById('btnSaveShortcuts'),
+        btnResetShortcuts: document.getElementById('btnResetShortcuts')
     },
 
     init: () => {
-        const controls = App.AdminEditor.adminDOMElements;
+        App.AdminEditor.loadShortcuts();
+        App.AdminEditor.updateTooltips();
+
+        const mapSvg = document.getElementById('mapSvg');
         
-        // Event Listeners
-        if (controls.addFloorBtn) controls.addFloorBtn.addEventListener('click', App.AdminEditor.handleAddNewFloor);
-        if (controls.deleteFloorBtn) controls.deleteFloorBtn.addEventListener('click', App.AdminEditor.handleDeleteFloor);
-        if (controls.setFloorLabelBtn) controls.setFloorLabelBtn.addEventListener('click', App.AdminEditor.handleSetFloorLabel);
-        if (controls.exportMapBtn) controls.exportMapBtn.addEventListener('click', App.AdminEditor.handleExportMapData);
-        if (controls.importMapInput) controls.importMapInput.addEventListener('change', App.AdminEditor.handleImportMapData);
+        mapSvg.addEventListener('click', App.AdminEditor.handleMapClick);
+        mapSvg.addEventListener('mousedown', App.AdminEditor.handleMouseDown);
+        window.addEventListener('mousemove', App.AdminEditor.handleMouseMove); 
+        window.addEventListener('mouseup', App.AdminEditor.handleMouseUp);
 
-        if (controls.saveToDbBtn) {
-            controls.saveToDbBtn.addEventListener('click', App.AdminEditor.handleSaveMapToDatabase);
-        }
-
-        // NEW: Listener for Floor Plan Upload Form
-        if (controls.uploadForm) {
-            controls.uploadForm.addEventListener('submit', App.AdminEditor.handleUploadFloorImage);
-        }
-
-        controls.adminAddBtns.forEach(btn => {
-            btn.addEventListener('click', App.AdminEditor.handleSetEditMode);
+        mapSvg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const direction = e.deltaY > 0 ? -0.1 : 0.1;
+            let newScale = App.AdminEditor.viewState.scale + direction;
+            newScale = Math.min(Math.max(0.5, newScale), 3);
+            App.AdminEditor.viewState.scale = newScale;
+            if(App.AdminEditor.adminDOMElements.zoomSlider) 
+                App.AdminEditor.adminDOMElements.zoomSlider.value = newScale;
+            App.AdminEditor._updateMapTransform();
         });
 
-        window.addEventListener('mousemove', App.AdminEditor.drag);
-        window.addEventListener('mouseup', App.AdminEditor.endDrag);
-        window.addEventListener('mouseleave', App.AdminEditor.endDrag);
+        document.querySelectorAll('.admin-tool-btn').forEach(btn => 
+            btn.addEventListener('click', App.AdminEditor.handleToolClick));
+        document.querySelectorAll('.admin-add-btn').forEach(btn => 
+            btn.addEventListener('click', App.AdminEditor.handleAddClick));
+
+        document.getElementById('addFloorBtn')?.addEventListener('click', App.AdminEditor.handleAddNewFloor);
+        document.getElementById('deleteFloorBtn')?.addEventListener('click', App.AdminEditor.handleDeleteFloor);
+        document.getElementById('setFloorLabelBtn')?.addEventListener('click', App.AdminEditor.handleSetFloorLabel);
+        
+        document.getElementById('saveToDbBtn')?.addEventListener('click', App.AdminEditor.handleSaveMapToDatabase);
+        document.getElementById('exportMapBtn')?.addEventListener('click', App.AdminEditor.handleExportMapData);
+        document.getElementById('importMapInput')?.addEventListener('change', App.AdminEditor.handleImportMapData);
+        document.getElementById('uploadForm')?.addEventListener('submit', App.AdminEditor.handleUploadFloorImage);
+
+        const els = App.AdminEditor.adminDOMElements;
+        if (els.btnOpenSettings) els.btnOpenSettings.addEventListener('click', App.AdminEditor.openSettings);
+        if (els.btnCloseSettings) els.btnCloseSettings.addEventListener('click', App.AdminEditor.closeSettings);
+        if (els.btnSaveShortcuts) els.btnSaveShortcuts.addEventListener('click', App.AdminEditor.closeSettings);
+        if (els.btnResetShortcuts) els.btnResetShortcuts.addEventListener('click', App.AdminEditor.resetShortcuts);
+
+        window.addEventListener('keydown', App.AdminEditor.handleKeyDown);
+        window.addEventListener('keyup', App.AdminEditor.handleKeyUp);
+
+        if (els.zoomSlider) els.zoomSlider.addEventListener('input', App.AdminEditor.handleZoom);
+        if (els.resetZoomBtn) els.resetZoomBtn.addEventListener('click', App.AdminEditor.handleResetZoom);
     },
 
     shutdown: () => {
-        const controls = App.AdminEditor.adminDOMElements;
-        
-        if (controls.addFloorBtn) controls.addFloorBtn.removeEventListener('click', App.AdminEditor.handleAddNewFloor);
-        if (controls.deleteFloorBtn) controls.deleteFloorBtn.removeEventListener('click', App.AdminEditor.handleDeleteFloor);
-        if (controls.setFloorLabelBtn) controls.setFloorLabelBtn.removeEventListener('click', App.AdminEditor.handleSetFloorLabel);
-        if (controls.exportMapBtn) controls.exportMapBtn.removeEventListener('click', App.AdminEditor.handleExportMapData);
-        if (controls.importMapInput) controls.importMapInput.removeEventListener('change', App.AdminEditor.handleImportMapData);
-
-        if (controls.saveToDbBtn) {
-            controls.saveToDbBtn.removeEventListener('click', App.AdminEditor.handleSaveMapToDatabase);
+        window.removeEventListener('keydown', App.AdminEditor.handleKeyDown);
+        window.removeEventListener('keyup', App.AdminEditor.handleKeyUp);
+        window.removeEventListener('mousemove', App.AdminEditor.handleMouseMove);
+        window.removeEventListener('mouseup', App.AdminEditor.handleMouseUp);
+        const mapSvg = document.getElementById('mapSvg');
+        if(mapSvg) {
+            mapSvg.removeEventListener('click', App.AdminEditor.handleMapClick);
+            mapSvg.removeEventListener('mousedown', App.AdminEditor.handleMouseDown);
         }
-
-        // NEW: Remove Listener for Upload
-        if (controls.uploadForm) {
-            controls.uploadForm.removeEventListener('submit', App.AdminEditor.handleUploadFloorImage);
-        }
-
-        controls.adminAddBtns.forEach(btn => {
-            btn.removeEventListener('click', App.AdminEditor.handleSetEditMode);
-        });
-
-        window.removeEventListener('mousemove', App.AdminEditor.drag);
-        window.removeEventListener('mouseup', App.AdminEditor.endDrag);
-        window.removeEventListener('mouseleave', App.AdminEditor.endDrag);
-
         App.AdminEditor.setEditMode(null);
     },
 
-    handleSetEditMode: (event) => {
-        const btn = event.currentTarget;
-        App.AdminEditor.setEditMode(btn);
+    loadShortcuts: () => {
+        const stored = localStorage.getItem('bravo_shortcuts');
+        App.AdminEditor.shortcuts = stored ? JSON.parse(stored) : { ...App.AdminEditor.defaultShortcuts };
     },
 
-    setEditMode: (targetBtn) => {
-        if (App.AdminEditor.isDragging) App.AdminEditor.endDrag();
-
-        const btns = App.AdminEditor.adminDOMElements.adminAddBtns;
-        
-        if (!targetBtn) {
-            App.AdminEditor.editMode = { mode: null, type: null, access: null, firstNodeId: null };
-            btns.forEach(b => b.classList.remove('active'));
-            App.AdminEditor._updateStatusText();
-            App.Renderer.redrawMapElements();
-            return;
-        }
-
-        const { mode, type, access } = targetBtn.dataset;
-
-        btns.forEach(b => b.classList.remove('active'));
-        targetBtn.classList.add('active');
-
-        App.AdminEditor.editMode = { 
-            mode, 
-            type, 
-            access, 
-            firstNodeId: null 
+    updateTooltips: () => {
+        const keys = App.AdminEditor.shortcuts;
+        const setHint = (selector, label, keyName) => {
+            const el = document.querySelector(selector);
+            if (el && keys[keyName]) el.title = `${label} [${keys[keyName].toUpperCase()}]`;
         };
-        
-        App.AdminEditor._updateStatusText();
-        App.Renderer.redrawMapElements();
+
+        setHint('#btn-draw-path', 'Draw Path', 'draw-path');
+        setHint('#btn-add-room', 'Add Room', 'add-room');
+        setHint('#btn-add-hallway', 'Add Hallway', 'add-hallway');
+        setHint('#btn-add-stairs', 'Add Stairs', 'add-stairs');
+        setHint('button[data-type="elevator"][data-access="all"]', 'Public Elevator', 'add-elevator-public');
+        setHint('button[data-type="elevator"][data-access="employee"]', 'Staff Elevator', 'add-elevator-staff');
+        setHint('#btn-connect', 'Connect', 'connect');
+        setHint('#btn-disconnect', 'Disconnect', 'disconnect');
+        setHint('button[data-mode="rename-node"]', 'Rename', 'rename');
+        setHint('#btn-delete-node', 'Delete', 'delete');
+        setHint('#saveToDbBtn', 'Save to DB', 'save');
     },
 
-    handleMapClick: (evt) => {
-        const targetId = evt.target.id;
-        const targetNode = App.mapData.nodes.find(n => n.id === targetId);
-        const { mode } = App.AdminEditor.editMode;
-
-        if (!mode) return;
-
-        if (mode === 'add') {
-            if (targetNode) return;
-            const pos = App.AdminEditor.getMousePosition(evt);
-            App.AdminEditor._handleAddNode(pos);
-        } else if (targetNode) {
-            if (mode === 'connect') App.AdminEditor._handleConnectNode(targetNode);
-            else if (mode === 'disconnect') App.AdminEditor._handleDisconnectNode(targetNode);
-            else if (mode === 'delete-node') App.AdminEditor._handleDeleteNode(targetNode);
-            else if (mode === 'rename-node') App.AdminEditor._handleRenameNode(targetNode);
-        }
+    resetShortcuts: () => {
+        if(!confirm("Reset all shortcuts?")) return;
+        App.AdminEditor.shortcuts = { ...App.AdminEditor.defaultShortcuts };
+        localStorage.removeItem('bravo_shortcuts');
+        App.AdminEditor.renderSettingsModal(); 
+        App.AdminEditor.updateTooltips();
     },
 
-    // 1. UPDATE THE UPLOAD FUNCTION
-    handleUploadFloorImage: async (event) => {
-        event.preventDefault();
-
-        const fileInput = App.AdminEditor.adminDOMElements.floorImageInput;
-        const file = fileInput.files[0];
-        
-        if (!file) {
-            alert("Please select an image file first.");
-            return;
-        }
-
-        const floorNum = App.State.currentFloor;
-        const formData = new FormData();
-        formData.append('floorImage', file);
-        formData.append('floorNumber', floorNum);
-
-        const status = App.AdminEditor.adminDOMElements.adminStatus;
-        status.textContent = "Uploading image...";
-        status.style.color = App.AdminEditor.constants.STATUS_COLORS.WARNING;
-
-        try {
-            // FIX: Point to PHP script instead of localhost:3000
-            const response = await fetch('server-user/uploadFloorPlan.php', {
-                method: 'POST',
-                body: formData
-                // Note: Don't set 'Content-Type', browser does it automatically for FormData
-            });
-
-            const result = await response.json();
-
-            if (result.success) {
-                status.textContent = "Floor plan uploaded!";
-                status.style.color = App.AdminEditor.constants.STATUS_COLORS.SUCCESS;
-                setTimeout(() => location.reload(), 1000);
-            } else {
-                throw new Error(result.message);
-            }
-        } catch (error) {
-            console.error(error);
-            status.textContent = "Upload failed: " + error.message;
-            status.style.color = App.AdminEditor.constants.STATUS_COLORS.ERROR;
-        }
-        
-        fileInput.value = '';
+    openSettings: () => {
+        App.AdminEditor.renderSettingsModal();
+        App.AdminEditor.adminDOMElements.shortcutModal.style.display = 'flex';
     },
 
-    handleAddNewFloor: () => {
-        const existingFloors = [...new Set(App.mapData.nodes.map(n => n.floor))];
-        let newFloorNum = existingFloors.length > 0 ? Math.max(...existingFloors) + 1 : 1;
-        const lastFloorNum = newFloorNum - 1;
-
-        let nodesAdded = 0;
-        // Check for existing floor plans in JS memory (legacy)
-        const lastFloorPlan = (App.mapData.floorPlans && App.mapData.floorPlans[lastFloorNum]) 
-            ? App.mapData.floorPlans[lastFloorNum] : null;
-
-        if (lastFloorNum > 0) {
-            const copyNode = (node, suffix, name, newAccess) => {
-                App.mapData.nodes.push({ 
-                    id: `${suffix}-${newFloorNum}-${Date.now()}`, 
-                    name: name, 
-                    type: node.type, 
-                    floor: newFloorNum, 
-                    x: node.x, 
-                    y: node.y, 
-                    access: newAccess 
-                });
-                nodesAdded++;
-            };
-
-            const stairs = App.mapData.nodes.find(n => n.floor === lastFloorNum && n.type === 'stairs');
-            const empElev = App.mapData.nodes.find(n => n.floor === lastFloorNum && n.type === 'elevator' && n.access === 'employee');
-            const pubElev = App.mapData.nodes.find(n => n.floor === lastFloorNum && n.type === 'elevator' && n.access === 'all');
-            
-            if (stairs) copyNode(stairs, 'S', "Stairs", "all");
-            if (empElev) copyNode(empElev, 'E-Emp', "Elevator (Emp)", "employee");
-            if (pubElev) copyNode(pubElev, 'E-Pub', "Elevator", "all");
-            
-            if (lastFloorPlan) {
-                if (!App.mapData.floorPlans) App.mapData.floorPlans = {};
-                App.mapData.floorPlans[newFloorNum] = lastFloorPlan;
-            }
-        }
-
-        if (nodesAdded === 0) {
-            App.mapData.nodes.push({
-                id: `H-${newFloorNum}-START`, name: "Hallway", type: "hallway",
-                floor: newFloorNum, x: 400, y: 250, access: "all"
-            });
-        }
-
-        App.AdminEditor.adminDOMElements.adminStatus.textContent = `Floor ${newFloorNum} added successfully!`;
-        App.Renderer.switchFloor(newFloorNum);
+    closeSettings: () => {
+        App.AdminEditor.adminDOMElements.shortcutModal.style.display = 'none';
+        App.AdminEditor.updateTooltips();
     },
 
-    handleDeleteFloor: () => {
-        const floors = [...new Set(App.mapData.nodes.map(n => n.floor))];
-        if (floors.length === 0) return;
-        if (floors.length <= 1 && App.mapData.nodes.length > 0) {
-            App.AdminEditor.adminDOMElements.adminStatus.textContent = "Cannot delete the last remaining floor.";
-            return;
-        }
+    renderSettingsModal: () => {
+        const list = App.AdminEditor.adminDOMElements.shortcutList;
+        list.innerHTML = '';
+        const labels = {
+            'add-room': 'Add Room', 'add-hallway': 'Add Hallway', 'add-stairs': 'Add Stairs',
+            'add-elevator-public': 'Add Public Elevator', 'add-elevator-staff': 'Add Staff Elevator',
+            'connect': 'Connect Nodes', 'disconnect': 'Disconnect', 'delete': 'Delete Node',
+            'draw-path': 'Draw Path', 'rename': 'Rename Node', 'save': 'Save Map', 'cancel': 'Cancel'
+        };
 
-        const label = App.AdminEditor._getFloorLabel(App.State.currentFloor);
-
-        App.Modal.show(`Delete ${label}?`, "This will remove all nodes on this floor.", () => {
-            const otherNodes = App.mapData.nodes.filter(n => n.floor !== App.State.currentFloor);
-            const keepIds = new Set(otherNodes.map(n => n.id));
-
-            App.mapData.nodes = otherNodes;
-            App.mapData.edges = App.mapData.edges.filter(e => keepIds.has(e.source) && keepIds.has(e.target));
-
-            if (App.mapData.floorPlans) delete App.mapData.floorPlans[App.State.currentFloor];
-            if (App.mapData.floorLabels) delete App.mapData.floorLabels[App.State.currentFloor];
-
-            App.Modal.hide();
-            App.Renderer.populateSelectors();
-
-            const remaining = [...new Set(App.mapData.nodes.map(n => n.floor))];
-            App.Renderer.switchFloor(remaining.length > 0 ? Math.min(...remaining) : 1);
+        Object.entries(App.AdminEditor.shortcuts).forEach(([action, key]) => {
+            const row = document.createElement('div');
+            row.className = 'shortcut-row';
+            row.innerHTML = `<span class="text-sm text-gray-300 font-medium">${labels[action] || action}</span><button class="shortcut-key-btn" data-action="${action}">${key.toUpperCase()}</button>`;
+            row.querySelector('button').addEventListener('click', (e) => App.AdminEditor.startRecordingKey(e.target, action));
+            list.appendChild(row);
         });
     },
 
-    handleSetFloorLabel: () => {
-        if (!App.mapData.floorLabels) App.mapData.floorLabels = {};
-        const curr = App.mapData.floorLabels[App.State.currentFloor] || `Floor ${App.State.currentFloor}`;
-        const newLabel = prompt(`Enter display label for Floor ${App.State.currentFloor}:`, curr.replace('Floor ', ''));
+    startRecordingKey: (btnElement, action) => {
+        const originalText = btnElement.textContent;
+        btnElement.textContent = "Press key...";
+        btnElement.classList.add('recording');
 
-        if (newLabel && newLabel.trim()) {
-            App.mapData.floorLabels[App.State.currentFloor] = newLabel.trim();
-        } else if (newLabel === '') {
-            delete App.mapData.floorLabels[App.State.currentFloor];
-        }
-        App.Renderer.updateFloorButtons();
-    },
+        const recordHandler = (e) => {
+            e.preventDefault(); e.stopPropagation();
+            if (['Shift', 'Control', 'Alt', 'Meta'].includes(e.key)) return;
+            let newKey = e.key.toLowerCase();
+            if (newKey === ' ') newKey = 'space';
 
-    handleExportMapData: () => {
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(App.mapData, null, 2));
-        const a = document.createElement('a');
-        a.href = dataStr;
-        a.download = "school_map_data.json";
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-    },
-
-    handleImportMapData: (event) => {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = (e) => {
-            try {
-                const data = JSON.parse(e.target.result);
-                if (data && data.nodes && data.edges) {
-                    App.mapData = data;
-                    App.AdminEditor.adminDOMElements.adminStatus.textContent = "Map data imported successfully!";
-                    App.Utils.buildGraphMap(); 
-                    App.Renderer.populateSelectors();
-                    App.Renderer.updateFloorButtons();
-                    const first = App.mapData.nodes.length > 0 ? Math.min(...App.mapData.nodes.map(n => n.floor)) : 1;
-                    App.Renderer.switchFloor(first);
-                }
-            } catch (err) {
-                console.error(err);
-                App.AdminEditor.adminDOMElements.adminStatus.textContent = "Error parsing JSON file.";
-            }
+            App.AdminEditor.shortcuts[action] = newKey;
+            localStorage.setItem('bravo_shortcuts', JSON.stringify(App.AdminEditor.shortcuts));
+            btnElement.textContent = newKey.toUpperCase();
+            btnElement.classList.remove('recording');
+            window.removeEventListener('keydown', recordHandler);
         };
-        reader.readAsText(file);
-        event.target.value = '';
+
+        window.addEventListener('keydown', recordHandler);
+        const cancelHandler = () => {
+            btnElement.textContent = originalText;
+            btnElement.classList.remove('recording');
+            window.removeEventListener('keydown', recordHandler);
+            document.removeEventListener('click', cancelHandler);
+        };
+        setTimeout(() => document.addEventListener('click', cancelHandler, {once:true}), 100);
     },
 
-    // 2. UPDATE THE SAVE DATA FUNCTION
-    handleSaveMapToDatabase: () => {
-        const status = App.AdminEditor.adminDOMElements.adminStatus;
-        if (!App.mapData.nodes.length) {
-            status.textContent = "Error: No map data to save.";
-            status.style.color = App.AdminEditor.constants.STATUS_COLORS.ERROR;
+    handleToolClick: (e) => {
+        const mode = e.currentTarget.dataset.mode;
+        App.AdminEditor.setEditMode(App.AdminEditor.editMode.mode === mode ? null : mode);
+    },
+
+    handleAddClick: (e) => {
+        const { mode, type, access } = e.currentTarget.dataset;
+        const current = App.AdminEditor.editMode;
+        if (current.mode === mode && current.type === type) App.AdminEditor.setEditMode(null);
+        else App.AdminEditor.setEditMode(mode, type, access || 'all');
+    },
+
+    handleKeyDown: (e) => {
+        if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
+        if (e.key === 'Shift') App.AdminEditor.shiftPressed = true;
+        
+        const key = e.key.toLowerCase();
+        const map = App.AdminEditor.shortcuts;
+
+        if (key === map['add-room']) document.getElementById('btn-add-room')?.click();
+        if (key === map['add-hallway']) document.getElementById('btn-add-hallway')?.click();
+        if (key === map['add-stairs']) document.getElementById('btn-add-stairs')?.click();
+        
+        if (key === map['add-elevator-public']) 
+            (document.querySelector('button[data-type="elevator"][data-access="all"]') || {click:()=>{App.AdminEditor.setEditMode('add','elevator','all')}}).click();
+        if (key === map['add-elevator-staff']) 
+            (document.querySelector('button[data-type="elevator"][data-access="employee"]') || {click:()=>{App.AdminEditor.setEditMode('add','elevator','employee')}}).click();
+
+        if (key === map['connect']) document.getElementById('btn-connect')?.click();
+        if (key === map['disconnect']) document.getElementById('btn-disconnect')?.click();
+        if (key === map['delete']) document.getElementById('btn-delete-node')?.click();
+        if (key === map['draw-path']) document.getElementById('btn-draw-path')?.click();
+        
+        if (key === map['rename']) 
+            (document.querySelector('button[data-mode="rename-node"]') || {click:()=>{App.AdminEditor.setEditMode('rename-node')}}).click();
+
+        if (key === map['save']) { e.preventDefault(); App.AdminEditor.handleSaveMapToDatabase(); }
+        if (key === map['cancel']) App.AdminEditor.setEditMode(null);
+    },
+
+    handleKeyUp: (e) => {
+        if (e.key === 'Shift') App.AdminEditor.shiftPressed = false;
+    },
+
+    handleZoom: (e) => {
+        App.AdminEditor.viewState.scale = parseFloat(e.target.value);
+        App.AdminEditor._updateMapTransform();
+    },
+
+    handleResetZoom: () => {
+        App.AdminEditor.viewState = { ...App.AdminEditor.viewState, scale: 1, panX: 0, panY: 0 };
+        if(App.AdminEditor.adminDOMElements.zoomSlider) App.AdminEditor.adminDOMElements.zoomSlider.value = 1;
+        App.AdminEditor._updateMapTransform();
+    },
+
+    _updateMapTransform: () => {
+        const { scale, panX, panY } = App.AdminEditor.viewState;
+        const svg = document.getElementById('mapSvg');
+        if (svg) {
+            svg.style.transformOrigin = "0 0"; 
+            svg.style.transform = `translate(${panX}px, ${panY}px) scale(${scale})`;
+        }
+    },
+
+    handleMouseDown: (evt) => {
+        const target = evt.target;
+        const nodeGroup = target.closest('.node-group') || target.closest('g[id^="g-"]');
+        
+        if (nodeGroup && !App.AdminEditor.editMode.mode) {
+            const nodeId = nodeGroup.dataset.nodeId || target.id;
+            if (nodeId) {
+                App.AdminEditor.startDrag(evt, nodeId);
+                return;
+            }
+        }
+
+        if (!nodeGroup && !App.AdminEditor.editMode.mode) {
+            App.AdminEditor.viewState.isPanning = true;
+            App.AdminEditor.viewState.startX = evt.clientX - App.AdminEditor.viewState.panX;
+            App.AdminEditor.viewState.startY = evt.clientY - App.AdminEditor.viewState.panY;
+            document.body.style.cursor = 'grabbing';
+        }
+    },
+
+    handleMouseMove: (evt) => {
+        if (App.AdminEditor.isDragging && App.AdminEditor.draggedNodeId) {
+            evt.preventDefault();
+            if (App.AdminEditor.dragAnimationFrame) cancelAnimationFrame(App.AdminEditor.dragAnimationFrame);
+
+            App.AdminEditor.dragAnimationFrame = requestAnimationFrame(() => {
+                const pos = App.AdminEditor.getMousePosition(evt);
+                const node = App.mapData.nodes.find(n => n.id === App.AdminEditor.draggedNodeId);
+                if (!node) { App.AdminEditor.endDrag(); return; }
+
+                let rawX = pos.x - App.AdminEditor.offset.x;
+                let rawY = pos.y - App.AdminEditor.offset.y;
+
+                const gs = App.AdminEditor.gridSize;
+                node.x = App.AdminEditor.shiftPressed ? Math.round(rawX) : Math.round(rawX / gs) * gs;
+                node.y = App.AdminEditor.shiftPressed ? Math.round(rawY) : Math.round(rawY / gs) * gs;
+
+                App.Renderer.redrawMapElements();
+            });
             return;
         }
 
-        status.textContent = "Saving to database...";
-        status.style.color = App.AdminEditor.constants.STATUS_COLORS.WARNING;
+        if (App.AdminEditor.viewState.isPanning) {
+            evt.preventDefault();
+            App.AdminEditor.viewState.panX = evt.clientX - App.AdminEditor.viewState.startX;
+            App.AdminEditor.viewState.panY = evt.clientY - App.AdminEditor.viewState.startY;
+            App.AdminEditor._updateMapTransform();
+        }
+    },
 
-        // FIX: Ensure path is correct relative to your HTML
-        fetch('server-user/saveMapData.php', { 
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(App.mapData)
-        })
-        .then(r => r.json())
-        .then(d => {
-            status.textContent = d.message || (d.success ? "Map saved!" : "Failed to save.");
-            status.style.color = d.success ? App.AdminEditor.constants.STATUS_COLORS.SUCCESS : App.AdminEditor.constants.STATUS_COLORS.ERROR;
-        })
-        .catch((e) => {
-            console.error(e);
-            status.textContent = "Error: Could not connect to server.";
-            status.style.color = App.AdminEditor.constants.STATUS_COLORS.ERROR;
-        })
-        .finally(() => {
-            setTimeout(() => {
-                status.style.color = App.AdminEditor.constants.STATUS_COLORS.DEFAULT;
-                App.AdminEditor._updateStatusText();
-            }, 3000);
-        });
+    handleMouseUp: () => {
+        if (App.AdminEditor.viewState.isPanning) {
+            App.AdminEditor.viewState.isPanning = false;
+            document.body.style.cursor = '';
+        }
+        App.AdminEditor.endDrag();
     },
 
     startDrag: (evt, nodeId) => {
-        if (App.AdminEditor.editMode.mode) return;
-
         evt.preventDefault();
         App.AdminEditor.isDragging = true;
         App.AdminEditor.draggedNodeId = nodeId;
@@ -371,192 +329,246 @@ App.AdminEditor = {
         document.body.classList.add('is-dragging');
     },
 
-    drag: (evt) => {
-        if (!App.AdminEditor.isDragging) return;
-        evt.preventDefault();
-
-        if (App.AdminEditor.dragAnimationFrame) cancelAnimationFrame(App.AdminEditor.dragAnimationFrame);
-
-        App.AdminEditor.dragAnimationFrame = requestAnimationFrame(() => {
-            const pos = App.AdminEditor.getMousePosition(evt);
-            const node = App.mapData.nodes.find(n => n.id === App.AdminEditor.draggedNodeId);
-
-            if (!node) {
-                App.AdminEditor.endDrag();
-                return;
-            }
-
-            node.x = Math.round(pos.x - App.AdminEditor.offset.x);
-            node.y = Math.round(pos.y - App.AdminEditor.offset.y);
-
-            App.Renderer.redrawMapElements();
-        });
-    },
-
     endDrag: () => {
-        if (!App.AdminEditor.isDragging) return;
-        if (App.AdminEditor.dragAnimationFrame) cancelAnimationFrame(App.AdminEditor.dragAnimationFrame);
-
-        App.AdminEditor.isDragging = false;
-        App.AdminEditor.draggedNodeId = null;
-        document.body.classList.remove('is-dragging');
+        if (App.AdminEditor.isDragging) {
+            if (App.AdminEditor.dragAnimationFrame) cancelAnimationFrame(App.AdminEditor.dragAnimationFrame);
+            App.AdminEditor.isDragging = false;
+            App.AdminEditor.draggedNodeId = null;
+            document.body.classList.remove('is-dragging');
+            App.Utils.buildGraphMap();
+        }
     },
 
     getMousePosition: (evt) => {
-        const CTM = App.AdminEditor.adminDOMElements.mapSvg.getScreenCTM();
-        return {
-            x: (evt.clientX - CTM.e) / CTM.a,
-            y: (evt.clientY - CTM.f) / CTM.d
-        };
+        const svg = document.getElementById('mapSvg');
+        const CTM = svg.getScreenCTM();
+        if (!CTM) return { x: 0, y: 0 };
+        return { x: (evt.clientX - CTM.e) / CTM.a, y: (evt.clientY - CTM.f) / CTM.d };
     },
 
-    _getFloorLabel: (floorNum) => {
-        return (App.mapData.floorLabels && App.mapData.floorLabels[floorNum])
-            ? App.mapData.floorLabels[floorNum]
-            : `Floor ${floorNum}`;
-    },
-    
-    _generateNewNodeName: (type, access) => {
-        if (type === 'stairs') return 'Stairs';
-        if (type === 'hallway') return 'Hallway';
-        if (type === 'elevator') return (access === 'employee') ? 'Elevator (Emp)' : 'Elevator';
-        return `New ${type.charAt(0).toUpperCase() + type.slice(1)}`;
-    },
+    setEditMode: (mode, type = null, access = 'all') => {
+        App.AdminEditor.editMode = { mode, type, access, firstNodeId: null, lastAddedNodeId: null };
+        const status = document.getElementById('adminStatus');
+        if (status) status.textContent = mode ? `Mode: ${mode.toUpperCase()} ${type ? `(${type})` : ''}` : 'Drag nodes or Pan map.';
 
-    _updateStatusText: () => {
-        const { mode, type } = App.AdminEditor.editMode;
-        let text = 'Drag nodes to move them or select an action.';
-        let cursor = 'default';
+        document.querySelectorAll('.admin-add-btn').forEach(btn => btn.classList.remove('ring-2', 'ring-offset-2', 'ring-indigo-500'));
 
         if (mode) {
-            if (mode === 'add') {
-                text = `Click map to add new ${type}.`;
-                cursor = 'crosshair';
-            } else if (mode === 'connect') {
-                text = `Click first node to connect.`;
-                cursor = 'pointer';
-            } else if (mode === 'disconnect') {
-                text = `Click first node to disconnect.`;
-                cursor = 'pointer';
-            } else if (mode === 'delete-node') {
-                text = `Click a node to delete it.`;
-                cursor = 'pointer';
-            } else if (mode === 'rename-node') {
-                text = `Click a room to rename it.`;
-                cursor = 'pointer';
-            }
+            let s = `button[data-mode="${mode}"]`;
+            if (type) s += `[data-type="${type}"]`;
+            if (access && type === 'elevator') s += `[data-access="${access}"]`;
+            document.querySelector(s)?.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
         }
-        App.AdminEditor.adminDOMElements.adminStatus.textContent = text;
-        App.AdminEditor.adminDOMElements.mapSvg.style.cursor = cursor;
     },
 
-    _handleAddNode: (pos) => {
+    handleMapClick: (evt) => {
+        const target = evt.target;
+        const { mode } = App.AdminEditor.editMode;
+        
+        if (target.classList.contains('admin-edge-hitbox')) {
+            App.AdminEditor.handleEdgeClick(evt, { id: target.dataset.edgeId, source: target.dataset.edgeSource, target: target.dataset.edgeTarget });
+            return;
+        }
+
+        const nodeGroup = target.closest('.node-group') || target.closest('g[id^="g-"]');
+        const targetNode = nodeGroup ? App.mapData.nodes.find(n => n.id === (nodeGroup.dataset.nodeId || target.id)) : null;
+
+        if (!mode) return;
+        const pos = App.AdminEditor.getMousePosition(evt);
+
+        if (mode === 'add' && !targetNode) App.AdminEditor._handleAddNode(pos);
+        else if (mode === 'draw-path') {
+            if (targetNode) {
+                App.AdminEditor.editMode.lastAddedNodeId = targetNode.id;
+            } else {
+                const newNodeId = App.AdminEditor._handleAddNode(pos, true); 
+                const prevId = App.AdminEditor.editMode.lastAddedNodeId;
+                if (prevId && prevId !== newNodeId) {
+                    const exists = App.mapData.edges.some(e => (e.source === prevId && e.target === newNodeId) || (e.source === newNodeId && e.target === prevId));
+                    if(!exists) App.mapData.edges.push({ source: prevId, target: newNodeId });
+                }
+                App.Utils.buildGraphMap();
+                App.AdminEditor.editMode.lastAddedNodeId = newNodeId;
+                App.Renderer.redrawMapElements();
+            }
+        }
+        else if (mode === 'connect' && targetNode) App.AdminEditor._handleConnectNodes(targetNode.id);
+        else if (mode === 'disconnect' && targetNode) App.AdminEditor._handleDisconnectNode(targetNode);
+        else if (mode === 'delete-node' && targetNode) App.AdminEditor._handleDeleteNode(targetNode.id);
+        else if (mode === 'rename-node' && targetNode) App.AdminEditor._handleRenameNode(targetNode);
+    },
+
+    _handleAddNode: (pos, suppressRedraw = false) => {
         const { type, access } = App.AdminEditor.editMode;
-        const floor = App.State.currentFloor;
+        const floor = App.State.currentFloor, gs = App.AdminEditor.gridSize;
+        
         const newNode = {
             id: `${type.charAt(0).toUpperCase()}-${floor}-${Date.now()}`,
-            name: App.AdminEditor._generateNewNodeName(type, access),
-            type: type,
-            floor: floor,
-            x: Math.round(pos.x),
-            y: Math.round(pos.y),
-            access: access || 'all'
+            name: App.AdminEditor._generateNewNodeName(type),
+            type, floor, access: access || 'all',
+            x: Math.round(pos.x / gs) * gs, y: Math.round(pos.y / gs) * gs
         };
+
         App.mapData.nodes.push(newNode);
 
-        const nodesOnFloor = App.mapData.nodes.filter(n => n.floor === floor && n.id !== newNode.id);
-        if (nodesOnFloor.length > 0) {
-            let closest = null, min = Infinity;
-            nodesOnFloor.forEach(n => {
-                const dist = Math.hypot(n.x - newNode.x, n.y - newNode.y);
-                if (dist < min) { min = dist; closest = n; }
-            });
-            if (closest) App.mapData.edges.push({ source: newNode.id, target: closest.id });
+        if (App.AdminEditor.editMode.mode !== 'draw-path') {
+            const closest = App.mapData.nodes
+                .filter(n => n.floor === floor && n.id !== newNode.id)
+                .map(n => ({ id: n.id, dist: Math.hypot(n.x - newNode.x, n.y - newNode.y) }))
+                .sort((a, b) => a.dist - b.dist)[0];
+            
+            if (closest && closest.dist < 60) App.mapData.edges.push({ source: closest.id, target: newNode.id });
         }
 
         if (newNode.type === 'room') App.Renderer.populateSelectors();
-        App.Renderer.redrawMapElements();
-    },
-
-    _handleConnectNode: (targetNode) => {
-        const editMode = App.AdminEditor.editMode;
-        const status = App.AdminEditor.adminDOMElements.adminStatus;
-
-        if (!editMode.firstNodeId) {
-            editMode.firstNodeId = targetNode.id;
-            status.textContent = `Selected ${targetNode.name}. Select second node.`;
-        } else {
-            if (editMode.firstNodeId === targetNode.id) return;
-            const firstNode = App.mapData.nodes.find(n => n.id === editMode.firstNodeId);
-
-            if (firstNode.floor !== targetNode.floor) {
-                const isStairs = firstNode.type === 'stairs' && targetNode.type === 'stairs';
-                const isElevator = firstNode.type === 'elevator' && targetNode.type === 'elevator';
-                if (!isStairs && !isElevator) {
-                    status.textContent = "Error: Cross-floor links must be matching Stairs or Elevators.";
-                    setTimeout(() => { 
-                         App.AdminEditor.editMode.firstNodeId = null; 
-                         App.AdminEditor._updateStatusText(); 
-                    }, 2000);
-                    return;
-                }
-            }
-
-            App.mapData.edges.push({ source: editMode.firstNodeId, target: targetNode.id });
-            status.textContent = `Connected ${firstNode.name} and ${targetNode.name}!`;
-            editMode.firstNodeId = null; 
+        
+        if (!suppressRedraw) {
+            App.Renderer.redrawMapElements();
             App.Utils.buildGraphMap();
         }
-        App.Renderer.redrawMapElements();
+        return newNode.id; 
+    },
+
+    handleEdgeClick: (evt, edge) => {
+        if (!App.AdminEditor.editMode.mode) {
+             const pos = App.AdminEditor.getMousePosition(evt);
+             const gs = App.AdminEditor.gridSize;
+             const newNode = {
+                id: `H-${App.State.currentFloor}-${Date.now()}`,
+                name: "Hallway", type: "hallway", floor: App.State.currentFloor, access: "all",
+                x: Math.round(pos.x / gs) * gs, y: Math.round(pos.y / gs) * gs
+            };
+            App.mapData.nodes.push(newNode);
+            App.mapData.edges = App.mapData.edges.filter(e => 
+                !((e.source === edge.source && e.target === edge.target) || (e.source === edge.target && e.target === edge.source))
+            );
+            App.mapData.edges.push({ source: edge.source, target: newNode.id }, { source: newNode.id, target: edge.target });
+            App.Utils.buildGraphMap();
+            App.Renderer.redrawMapElements();
+            App.AdminEditor.startDrag(evt, newNode.id);
+        }
+    },
+
+    _handleConnectNodes: (nodeId) => {
+        if (!App.AdminEditor.editMode.firstNodeId) App.AdminEditor.editMode.firstNodeId = nodeId;
+        else {
+            if (App.AdminEditor.editMode.firstNodeId !== nodeId) {
+                App.mapData.edges.push({ source: App.AdminEditor.editMode.firstNodeId, target: nodeId });
+                App.Utils.buildGraphMap();
+                App.Renderer.redrawMapElements();
+            }
+            App.AdminEditor.editMode.firstNodeId = null;
+        }
     },
 
     _handleDisconnectNode: (targetNode) => {
-        const editMode = App.AdminEditor.editMode;
-        const status = App.AdminEditor.adminDOMElements.adminStatus;
-
-        if (!editMode.firstNodeId) {
-            editMode.firstNodeId = targetNode.id;
-            status.textContent = `Selected ${targetNode.name}. Click second node to disconnect.`;
-        } else {
-            if (editMode.firstNodeId === targetNode.id) return;
-            const firstId = editMode.firstNodeId;
-            const prevCount = App.mapData.edges.length;
-
-            App.mapData.edges = App.mapData.edges.filter(e =>
-                !((e.source === firstId && e.target === targetNode.id) || (e.source === targetNode.id && e.target === firstId))
-            );
-
-            status.textContent = (App.mapData.edges.length < prevCount) 
-                ? `Disconnected.` : `No connection found.`;
-            
-            editMode.firstNodeId = null;
-            App.Utils.buildGraphMap();
-        }
-        App.Renderer.redrawMapElements();
-    },
-
-    _handleDeleteNode: (targetNode) => {
-        App.Modal.show(`Delete ${targetNode.name}?`, 'This will remove the node and connections.', () => {
-            App.mapData.nodes = App.mapData.nodes.filter(n => n.id !== targetNode.id);
-            App.mapData.edges = App.mapData.edges.filter(e => e.source !== targetNode.id && e.target !== targetNode.id);
-
-            if (targetNode.type === 'room') App.Renderer.populateSelectors();
+        if (!App.AdminEditor.editMode.firstNodeId) App.AdminEditor.editMode.firstNodeId = targetNode.id;
+        else {
+            const firstId = App.AdminEditor.editMode.firstNodeId;
+            App.mapData.edges = App.mapData.edges.filter(e => !((e.source === firstId && e.target === targetNode.id) || (e.source === targetNode.id && e.target === firstId)));
+            App.AdminEditor.editMode.firstNodeId = null;
             App.Utils.buildGraphMap();
             App.Renderer.redrawMapElements();
-            App.Modal.hide();
-        });
+        }
+    },
+
+    _handleDeleteNode: (nodeId) => {
+        if (!confirm('Delete node?')) return;
+        App.mapData.nodes = App.mapData.nodes.filter(n => n.id !== nodeId);
+        App.mapData.edges = App.mapData.edges.filter(e => e.source !== nodeId && e.target !== nodeId);
+        App.Utils.buildGraphMap();
+        App.Renderer.redrawMapElements();
+        App.Renderer.populateSelectors();
     },
 
     _handleRenameNode: (targetNode) => {
-        if (targetNode.type !== 'room') {
-            App.AdminEditor.adminDOMElements.adminStatus.textContent = 'Only rooms can be renamed.';
-            return;
-        }
-        const newName = prompt(`Enter new name for "${targetNode.name}":`, targetNode.name);
-        if (newName && newName.trim()) {
-            targetNode.name = newName.trim();
+        const newName = prompt("Rename:", targetNode.name);
+        if (newName) {
+            targetNode.name = newName;
             App.Renderer.redrawMapElements();
             App.Renderer.populateSelectors();
         }
+    },
+
+    _generateNewNodeName: (type) => `${type}-${Date.now().toString().slice(-4)}`,
+
+    handleSaveMapToDatabase: () => {
+        const btn = document.getElementById('saveToDbBtn');
+        const original = btn.textContent;
+        btn.textContent = "Saving...";
+        fetch('server-user/saveMapData.php', {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(App.mapData)
+        }).then(r => r.json()).then(d => {
+            alert(d.success ? "Saved!" : "Error: " + d.message);
+            btn.textContent = original;
+        }).catch(err => { console.error(err); btn.textContent = original; });
+    },
+
+    handleAddNewFloor: () => {
+        const existing = new Set(App.mapData.nodes.map(n => n.floor));
+        const newFloor = existing.size ? Math.max(...existing) + 1 : 1;
+        App.mapData.nodes.push({ id:`H-${newFloor}-START`, name:'Hallway', type:'hallway', floor: newFloor, x:100, y:100, access:'all'});
+        if(!App.mapData.floorLabels) App.mapData.floorLabels = {};
+        App.mapData.floorLabels[newFloor] = `Floor ${newFloor}`;
+        App.Renderer.updateFloorButtons();
+        App.Renderer.switchFloor(newFloor);
+    },
+    
+    handleDeleteFloor: () => {
+        if(!confirm("Delete current floor?")) return;
+        const f = App.State.currentFloor;
+        App.mapData.nodes = App.mapData.nodes.filter(n => n.floor !== f);
+        if(App.mapData.floorPlans) delete App.mapData.floorPlans[f];
+        if(App.mapData.floorLabels) delete App.mapData.floorLabels[f];
+        App.Renderer.updateFloorButtons();
+        App.Renderer.switchFloor(1);
+    },
+
+    handleSetFloorLabel: () => {
+        const l = prompt("Label:", App.mapData.floorLabels?.[App.State.currentFloor] || "");
+        if(l) {
+            if(!App.mapData.floorLabels) App.mapData.floorLabels = {};
+            App.mapData.floorLabels[App.State.currentFloor] = l;
+            App.Renderer.updateFloorButtons();
+        }
+    },
+
+    handleExportMapData: () => {
+        const a = document.createElement('a');
+        a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(App.mapData));
+        a.download = "map.json";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    },
+
+    handleImportMapData: (e) => {
+        const r = new FileReader();
+        r.onload = (ev) => {
+            try {
+                const d = JSON.parse(ev.target.result);
+                if(d.nodes && d.edges) {
+                    App.mapData = d;
+                    App.Utils.buildGraphMap();
+                    App.Renderer.redrawMapElements();
+                    App.Renderer.updateFloorButtons();
+                    App.Renderer.populateSelectors();
+                    alert("Imported!");
+                }
+            } catch(x){ alert("Invalid JSON"); }
+        };
+        r.readAsText(e.target.files[0]);
+    },
+
+    handleUploadFloorImage: async (e) => {
+        e.preventDefault();
+        const f = document.getElementById('floorImageInput').files[0];
+        if(!f) return;
+        const fd = new FormData();
+        fd.append('floorImage', f);
+        fd.append('floorNumber', App.State.currentFloor);
+        await fetch('server-user/uploadFloorPlan.php', { method:'POST', body:fd });
+        location.reload();
     }
 };

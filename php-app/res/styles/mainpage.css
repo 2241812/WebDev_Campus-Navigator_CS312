@@ -1,5 +1,5 @@
 /**
- * mainpage.css
+ * mainpage.css - Updated for "Bravo" Gold/Olive Theme
  */
 
 /* --- Base & Container Styles --- */
@@ -7,10 +7,15 @@ body {
     font-family: 'Inter', sans-serif;
 }
 
+h1, h2, h3 {
+    font-family: 'Merriweather', serif;
+}
+
 #mapContainer {
     transition: opacity 0.5s ease-in-out;
     position: relative;
-    background-color: #1a202c; /* Ensure dark background behind map */
+    /* Use the Charcoal Blue from palette for the map background */
+    background-color: #2F4858; 
 }
 
 /* --- Node Base & State Styles --- */
@@ -21,7 +26,7 @@ body {
 
 .node:hover,
 .node.draggable:hover {
-    stroke: #38b2ac;
+    stroke: #E4B31E; /* Brand Gold */
     stroke-width: 4;
 }
 
@@ -29,91 +34,80 @@ body {
     cursor: move;
 }
 
-/* State: Node is part of the final path */
+/* Node Selection States */
 .highlight {
-    fill: #68d391;
-    stroke: #f0fff4;
+    fill: #68d391; /* Keep green for path active, good contrast on charcoal */
+    stroke: #ffffff;
     stroke-width: 2;
 }
 
-/* State: Node is selected for an admin action */
 .selected-for-action {
-    stroke: #f6ad55;
+    stroke: #E4B31E; /* Brand Gold */
     stroke-width: 4;
     stroke-dasharray: 5, 5;
     animation: pulsing-stroke 2s infinite linear;
 }
 
-/* State: Node is part of a route step being hovered */
-.step-highlight {
-    stroke: #F6AD55;
-    stroke-width: 5px;
-    fill: #F6AD55;
-    animation: pulsing-stroke 1.5s infinite linear;
-}
-
-/* State: Start Node */
 .node.start-node-selected {
-    stroke: #000000;
-    stroke-width: 4;
-    fill: #71f257;
+    stroke: #ffffff;
+    stroke-width: 3;
+    fill: #68D391; /* Bright Green */
 }
 
-/* State: End Node */
 .node.end-node-selected {
-    stroke: #000000;
-    stroke-width: 4;
-    fill: #bf0404;
+    stroke: #ffffff;
+    stroke-width: 3;
+    fill: #F26419; /* Brand Orange */
 }
 
-/* --- Node Type Styles --- */
+/* --- Node Type Styles (Updated to match Legend) --- */
 circle.room {
-    fill: #677ca0;
-    stroke: #E2E8F0;
+    fill: #4F4C3B; /* Brand Olive */
+    stroke: #9F987C; /* Brand Light */
 }
 
 .hallway {
-    fill: #a0aec0;
-    stroke: #718096;
+    fill: #9F987C;
+    stroke: #4F4C3B;
 }
 
 .stairs {
-    fill: #63b3ed;
-    stroke: #e2e8f0;
+    fill: #33658A; /* Brand Blue */
+    stroke: #ffffff;
 }
 
 .elevator {
-    fill: #f6ad55;
-    stroke: #e2e8f0;
+    fill: #E4B31E; /* Brand Gold */
+    stroke: #202116;
 }
 
 .elevator-employee {
-    fill: #dd6b20;
-    stroke: #e2e8f0;
+    fill: #F26419; /* Brand Orange */
+    stroke: #ffffff;
 }
 
 /* --- Node Label Styles --- */
 .node-label {
-    fill: #e2e8f0; /* Lighter text for dark mode */
+    fill: #ffffff; /* White text for contrast on Charcoal BG */
     font-size: 11px;
     font-weight: 600;
     text-anchor: middle;
     user-select: none;
     -webkit-user-select: none;
-    text-shadow: 0px 1px 2px rgba(0,0,0,0.8);
+    text-shadow: 0px 1px 3px rgba(0,0,0,0.9);
     pointer-events: none;
 }
 
 /* --- Pathfinding Styles --- */
 .path {
     stroke-width: 6px;
-    stroke: #68d391;
+    stroke: #E4B31E; /* Brand Gold Path */
     stroke-opacity: 0.9;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
     animation: dash 1.5s linear forwards;
-    filter: drop-shadow(0px 2px 3px rgba(0,0,0,0.5));
+    filter: drop-shadow(0px 4px 4px rgba(0,0,0,0.6));
     pointer-events: none;
 }
 
@@ -128,87 +122,98 @@ body.is-dragging .node {
     pointer-events: none;
 }
 
-body.is-dragging .node.selected-for-action {
-    stroke: #3498db;
-    stroke-width: 3;
-}
-
-/* --- UI Controls --- */
+/* --- UI Component: Role Buttons --- */
 .role-btn {
-    padding: 0.5rem 1rem;
-    border-radius: 0.375rem;
-    font-size: 0.875rem;
-    font-weight: 500;
-    background-color: #4A5568;
-    color: #E2E8F0;
+    padding: 0.5rem 1.2rem;
+    border-radius: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    background-color: #202116; /* Brand Dark */
+    color: #9F987C; /* Brand Light */
+    border: 1px solid #4F4C3B;
     transition: all 0.2s ease;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .role-btn:hover {
-    background-color: #718096;
+    background-color: #4F4C3B;
+    color: white;
 }
 
 .role-btn.active {
-    background-color: #3182CE;
-    color: white;
-    box-shadow: 0 0 0 2px #4A5568;
+    background-color: #E4B31E; /* Brand Gold */
+    color: #202116; /* Brand Dark text */
+    border-color: #E4B31E;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
-.node.path-selectable:hover {
-    cursor: crosshair;
-    stroke: #F6AD55;
-    stroke-width: 4;
-}
-
-.admin-add-btn.active {
-    background-color: #38b2ac;
-    color: white;
-    box-shadow: 0 0 0 2px #4a5568;
-}
-
-#importMapInput {
-    display: none;
-}
-
-/* --- UI Component: Map Legend --- */
-#mapLegendContent {
-    transition: all 0.3s ease-in-out;
-    overflow: hidden;
-    max-height: 500px;
-    opacity: 1;
-    margin-top: 0.25rem;
-}
-
-#legendToggleIcon {
-    transition: transform 0.3s ease;
-}
-
-#mapLegend.collapsed #mapLegendContent {
-    max-height: 0;
-    opacity: 0;
-    margin-top: 0;
-}
-
-#mapLegend.collapsed #legendToggleIcon {
-    transform: rotate(-90deg);
-}
-
-/* --- UI Component: Route Steps Panel --- */
+/* --- UI Component: Route Steps --- */
 .route-step {
     cursor: pointer;
-    padding: 6px 10px;
-    margin-bottom: 4px;
-    border-radius: 4px;
-    background-color: rgba(74, 85, 104, 0.3);
+    padding: 8px 12px;
+    margin-bottom: 6px;
+    border-radius: 6px;
+    background-color: rgba(32, 33, 22, 0.6); /* Darker background */
+    border-left: 3px solid #E4B31E; /* Gold accent */
     transition: background-color 0.2s ease;
     font-size: 0.9rem;
 }
 
 .route-step:hover {
-    background-color: #4A5568;
+    background-color: rgba(228, 179, 30, 0.2); /* Gold tint */
 }
 
-/* --- Animations --- */
+/* --- Scrollbar Styling --- */
+.custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: #202116;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background-color: #4F4C3B;
+    border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: #8B7E50;
+}
+
+/* --- Admin Visibility & Tools --- */
+body.admin-mode #zoomControls {
+    display: flex !important;
+}
+
+body.admin-mode #mapContainer {
+    cursor: grab;
+}
+
+body.admin-mode #mapContainer:active {
+    cursor: grabbing;
+}
+
+.edge { display: none !important; }
+.hallway-group { display: none !important; }
+
+body.admin-mode .edge {
+    display: block !important;
+    opacity: 0.4; 
+    stroke: #9F987C;
+}
+
+body.admin-mode .hallway-group {
+    display: block !important;
+}
+
+/* Edge Hover Effect */
+body.admin-mode .edge-group:hover .edge {
+    stroke: #E4B31E; /* Gold on hover */
+    stroke-opacity: 1;
+    stroke-width: 4;
+    cursor: copy;
+}
+
+/* Animations */
 @keyframes dash {
     from { stroke-dasharray: 10000; stroke-dashoffset: 10000; }
     to { stroke-dasharray: 10000; stroke-dashoffset: 0; }
@@ -219,32 +224,125 @@ body.is-dragging .node.selected-for-action {
     100% { stroke-dashoffset: -20; }
 }
 
+/* Shortcut Modal Styles */
+.shortcut-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px;
+    background: rgba(32, 33, 22, 0.4);
+    border-bottom: 1px solid rgba(139, 126, 80, 0.2);
+}
+
+.shortcut-key-btn {
+    background: #202116;
+    border: 1px solid #8B7E50;
+    color: #E4B31E;
+    padding: 4px 12px;
+    border-radius: 6px;
+    font-family: monospace;
+    font-weight: bold;
+    cursor: pointer;
+    min-width: 60px;
+    text-align: center;
+    transition: all 0.2s;
+}
+
+.shortcut-key-btn:hover {
+    background: #4F4C3B;
+    color: white;
+}
+
+.shortcut-key-btn.recording {
+    background: #F26419; /* Orange */
+    border-color: #F26419;
+    color: white;
+    animation: pulse-orange 1.5s infinite;
+}
+
+@keyframes pulse-orange {
+    0% { box-shadow: 0 0 0 0 rgba(242, 100, 25, 0.7); }
+    70% { box-shadow: 0 0 0 6px rgba(242, 100, 25, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(242, 100, 25, 0); }
+}
+
+/* Tooltips */
+.admin-add-btn { position: relative; }
+.admin-add-btn:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #202116;
+    color: #E4B31E;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    white-space: nowrap;
+    border: 1px solid #E4B31E;
+    z-index: 100;
+    pointer-events: none;
+}
+
 /* =========================================
-   VISIBILITY CONTROL (The "Hiding" Logic)
+   MAP LEGEND ANIMATIONS
    ========================================= */
 
-/* 1. DEFAULT: HIDE Edges and Hallway Dots */
-.edge {
-    display: none !important;
+#mapLegendContent {
+    transition: all 0.3s ease-in-out;
+    overflow: hidden;
+    max-height: 500px; /* Arbitrary height large enough for content */
+    opacity: 1;
 }
 
-.hallway-group {
-    display: none !important;
+#legendToggleIcon {
+    display: inline-block;
+    transition: transform 0.3s ease;
 }
 
-/* 2. ADMIN MODE: SHOW Edges and Hallway Dots */
-body.admin-mode .edge {
-    display: block !important;
-    opacity: 0.5; 
+/* --- COLLAPSED STATE --- */
+#mapLegend.collapsed #mapLegendContent {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0 !important;
+    
+    /* CRITICAL: These override Tailwind's pt-2 and border-t classes */
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    border-top-width: 0 !important;
 }
 
-body.admin-mode .hallway-group {
-    display: block !important;
+#mapLegend.collapsed #legendToggleIcon {
+    transform: rotate(-90deg); /* Rotates the arrow */
+}
+/* --- Location Marker (The Bravo Dog) --- */
+#userMarker {
+    pointer-events: none; /* Let clicks pass through to nodes below */
+    z-index: 100;
+    filter: drop-shadow(0px 4px 6px rgba(0,0,0,0.5));
+    display: none; /* Hidden by default */
+    transform-box: fill-box;
+    transform-origin: center bottom;
 }
 
-/* 3. Ensure the Path is always on top and visible */
-#path-container {
-    display: block !important;
-    z-index: 50;
+/* Bounce Animation for the marker */
+.marker-bounce {
+    animation: bounce 1s infinite;
+}
+
+@keyframes bounce {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-10px); }
+}
+
+/* Ensure path stays visible */
+.path-persistent {
+    stroke-width: 6px;
+    stroke: #E4B31E; /* Brand Gold */
+    stroke-opacity: 0.8;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
     pointer-events: none;
 }

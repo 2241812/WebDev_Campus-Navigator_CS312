@@ -3,88 +3,136 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bravo!</title>
+    <title>Bravo's Compass</title>
 
-    <!-- Tailwind (must load first) -->
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            dark: '#202116',      /* Main Background */
+                            olive: '#4F4C3B',     /* Sidebar/Panels */
+                            gold: '#E4B31E',      /* Primary Buttons */
+                            orange: '#F26419',    /* Alert/Delete Buttons */
+                            muted: '#8B7E50',     /* Secondary Actions */
+                            light: '#9F987C',     /* Borders/Subtext */
+                            charcoal: '#2F4858',  /* Map Background */
+                            blue: '#33658A',      /* Edit Actions */
+                            sky: '#86BBD8'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['Merriweather', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
 
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
 
-    <!-- Your CSS must load LAST to override Tailwind -->
-    <link rel="stylesheet" href="res/styles/mainpage.css?ver=4">
+    <link rel="stylesheet" href="res/styles/mainpage.css?ver=7">
 </head>
 
+<body class="bg-brand-dark text-white flex flex-col items-center min-h-screen p-4 md:p-6 space-y-6 antialiased font-sans">
 
-<body class="bg-gray-900 text-white flex flex-col items-center min-h-screen p-4 md:p-6 space-y-6 antialiased">
-
-    <div class="flex items-center space-x-4 mb-0">
-        <h1 class="text-3xl font-bold text-white">Bravo's Compass</h1>
-        
-        <button id="logoutBtn" class="bg-gray-700 hover:bg-gray-600 text-white text-xs font-bold py-1 px-3 rounded-full border border-gray-500 transition-colors duration-300">
-            Logout
+    <div class="flex items-center justify-between w-full max-w-7xl border-b border-brand-muted pb-4 mb-2">
+        <h1 class="text-4xl font-black text-brand-gold font-serif tracking-wide drop-shadow-md">Bravo's Compass</h1>
+        <button id="logoutBtn" class="bg-brand-muted hover:bg-brand-light text-white text-xs font-bold py-2 px-4 rounded-full border border-brand-light transition-colors duration-300 uppercase tracking-wider">
+            Home
         </button>
     </div>
 
     <div id="floorSelector" class="flex space-x-2 flex-shrink-0"></div>
     
-    <div id="mainContentWrapper" class="w-full max-w-7xl flex flex-col md:flex-row justify-center gap-6">
+    <div id="mainContentWrapper" class="w-full max-w-7xl flex flex-col md:flex-row justify-center gap-8 items-start">
 
-        <div id="adminPanel" class="w-full md:w-80 lg:w-96 bg-gray-800 p-6 rounded-lg shadow-lg hidden flex-shrink-0">
-            <h2 class="text-lg font-semibold text-white mb-4">Admin Controls</h2>
+       <div id="adminPanel" class="w-full md:w-80 lg:w-96 bg-brand-olive p-6 rounded-xl shadow-2xl hidden flex-shrink-0 border-2 border-brand-muted">
+            <h2 class="text-xl font-bold text-brand-gold mb-4 font-serif border-b border-brand-muted pb-2">Admin Controls</h2>
             
-            <div id="adminStatus" class="bg-gray-700 p-3 rounded-md mb-4 text-center text-gray-300 text-sm">
-                Drag nodes to move them or select an action below.
+            <div id="adminStatus" class="bg-brand-dark bg-opacity-50 p-3 rounded-md mb-6 text-center text-gray-300 text-sm italic border border-brand-muted">
+                Drag nodes to move. Drag background to pan.
             </div>
     
-            <p class="text-xs text-gray-400 mb-2 font-semibold">ADD NODES</p>
-            <div class="grid grid-cols-2 gap-2">
-                <button class="admin-add-btn bg-gray-600 hover:bg-gray-500 p-2 rounded-md" data-mode="add" data-type="room">Add Room</button>
-                <button class="admin-add-btn bg-gray-600 hover:bg-gray-500 p-2 rounded-md" data-mode="add" data-type="hallway">Add Hallway</button>
-                <button class="admin-add-btn bg-blue-600 hover:bg-blue-500 p-2 rounded-md" data-mode="add" data-type="stairs">Add Stairs</button>
-                <button class="admin-add-btn bg-orange-500 hover:bg-orange-400 p-2 rounded-md" data-mode="add" data-type="elevator" data-access="all">Public Elevator</button>
-                <button class="admin-add-btn bg-orange-800 hover:bg-orange-700 p-2 rounded-md col-span-2" data-mode="add" data-type="elevator" data-access="employee">Employee Elevator</button>
+            <p class="text-xs text-brand-gold mb-2 font-bold uppercase tracking-widest">Construct</p>
+            <div class="flex flex-wrap gap-3 mb-6">
+                <button id="btn-draw-path" class="admin-add-btn flex-grow bg-brand-gold hover:bg-yellow-400 text-brand-dark p-2 rounded-lg font-bold shadow-md transition-transform active:scale-95" data-mode="draw-path" data-type="hallway" title="Continuous Path (Shortcut: P)">
+                    Draw Path
+                </button>
+                <button id="btn-add-room" class="admin-add-btn flex-grow bg-brand-muted hover:bg-brand-light text-white p-2 rounded-lg font-semibold shadow-sm" data-mode="add" data-type="room" title="Shortcut: R">
+                    Add Room
+                </button>
+                <button id="btn-add-hallway" class="admin-add-btn flex-grow bg-brand-muted hover:bg-brand-light text-white p-2 rounded-lg font-semibold shadow-sm" data-mode="add" data-type="hallway" title="Shortcut: H">
+                    Hallway
+                </button>
+                <button id="btn-add-stairs" class="admin-add-btn flex-grow bg-brand-blue hover:bg-sky-600 text-white p-2 rounded-lg font-semibold shadow-sm" data-mode="add" data-type="stairs" title="Shortcut: S">
+                    Stairs
+                </button>
+                <button class="admin-add-btn flex-grow bg-brand-orange hover:bg-red-500 text-white p-2 rounded-lg font-semibold shadow-sm" data-mode="add" data-type="elevator" data-access="all">
+                    Public Elev
+                </button>
+                <button class="admin-add-btn flex-grow bg-brand-dark border border-brand-orange text-brand-orange hover:bg-brand-dark hover:text-white p-2 rounded-lg font-semibold shadow-sm" data-mode="add" data-type="elevator" data-access="employee">
+                    Staff Elev
+                </button>
             </div>
             
-            <p class="text-xs text-gray-400 mt-4 mb-2 font-semibold">EDIT MAP</p>
-            <div class="grid grid-cols-2 gap-2">
-                 <button class="admin-add-btn bg-green-600 hover:bg-green-500 p-2 rounded-md" data-mode="connect">Connect Nodes</button>
-                 <button class="admin-add-btn bg-yellow-600 hover:bg-yellow-500 p-2 rounded-md" data-mode="disconnect">Disconnect</button>
-                 <button class="admin-add-btn bg-purple-600 hover:bg-purple-500 p-2 rounded-md" data-mode="rename-node">Rename Room</button>
-                 <button class="admin-add-btn bg-red-700 hover:bg-red-600 p-2 rounded-md" data-mode="delete-node">Delete Node</button>
-                 <button id="deleteFloorBtn" class="bg-red-800 hover:bg-red-700 p-2 rounded-md col-span-2">Delete This Floor</button>
+            <p class="text-xs text-brand-gold mt-6 mb-2 font-bold uppercase tracking-widest">Edit & Manage</p>
+            <div class="flex flex-wrap gap-3">
+                 <button id="btn-connect" class="admin-add-btn flex-grow bg-brand-blue hover:bg-sky-600 p-2 rounded-lg transition-colors text-sm font-semibold" data-mode="connect" title="Shortcut: C">
+                     Connect
+                 </button>
+                 <button id="btn-disconnect" class="admin-add-btn flex-grow bg-brand-dark border border-brand-muted hover:bg-brand-muted p-2 rounded-lg transition-colors text-sm font-semibold" data-mode="disconnect" title="Shortcut: X">
+                     Disconnect
+                 </button>
+                 <button class="admin-add-btn flex-grow bg-brand-light hover:bg-gray-400 text-brand-dark p-2 rounded-lg transition-colors text-sm font-semibold" data-mode="rename-node">
+                     Rename
+                 </button>
+                 <button id="btn-delete-node" class="admin-add-btn flex-grow bg-brand-orange hover:bg-red-600 p-2 rounded-lg transition-colors text-sm font-bold shadow-md" data-mode="delete-node" title="Shortcut: D">
+                     Delete Node
+                 </button>
+                 <button id="deleteFloorBtn" class="bg-red-900 bg-opacity-60 hover:bg-red-800 text-red-200 border border-red-900 p-2 rounded-lg w-full transition-colors text-xs mt-2 uppercase font-bold tracking-wider">
+                     Delete This Floor
+                 </button>
             </div>
     
-            <button id="addFloorBtn" class="w-full mt-4 bg-teal-600 hover:bg-teal-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-                Add New Floor
-            </button>
-            
-            <button id="setFloorLabelBtn" class="w-full mt-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-                Set Floor Label
-            </button>
-            
-           <div class="mt-4 pt-4 border-t border-gray-700">
-                <h3 class="text-md font-semibold text-white mb-2">Data Management</h3>
-                 <div class="grid grid-cols-2 gap-2">
-                    <label for="importMapInput" class="w-full text-center bg-gray-600 hover:bg-gray-500 text-white font-bold py-2 px-4 rounded-md transition duration-300 cursor-pointer">
-                        Import JSON
-                    </label>
-                    <input type="file" id="importMapInput" accept=".json,application/json" class="hidden">
-                    <button id="exportMapBtn" class="w-full bg-green-700 hover:bg-green-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-                        Export JSON
+            <div class="border-t border-brand-muted mt-6 pt-4 space-y-3">
+                <button id="addFloorBtn" class="w-full bg-brand-gold hover:bg-yellow-400 text-brand-dark font-bold py-2 px-4 rounded-lg shadow-md transition duration-300">
+                    + Add New Floor
+                </button>
+                <div class="grid grid-cols-2 gap-2">
+                    <button id="setFloorLabelBtn" class="bg-brand-muted hover:bg-brand-light text-white font-bold py-2 px-4 rounded-lg text-sm transition duration-300">
+                        Set Label
+                    </button>
+                    <button id="btn-open-settings" class="bg-brand-dark hover:bg-gray-800 text-white font-bold py-2 px-4 rounded-lg text-sm border border-brand-muted transition duration-300">
+                        ⚙️ Shortcuts
                     </button>
                 </div>
-                <button id="saveToDbBtn" class="w-full mt-2 bg-blue-700 hover:bg-blue-800 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-                    Save Changes to Database
+            </div>
+            
+           <div class="mt-6 pt-4 border-t border-brand-muted">
+                 <div class="flex gap-2 mb-3">
+                    <label for="importMapInput" class="flex-1 text-center bg-brand-charcoal hover:bg-gray-700 text-white py-2 px-2 rounded-lg cursor-pointer text-sm font-bold border border-gray-600">
+                        Import
+                    </label>
+                    <input type="file" id="importMapInput" accept=".json,application/json" class="hidden">
+                    <button id="exportMapBtn" class="flex-1 bg-brand-charcoal hover:bg-gray-700 text-white py-2 px-2 rounded-lg text-sm font-bold border border-gray-600">
+                        Export
+                    </button>
+                </div>
+                <button id="saveToDbBtn" class="w-full bg-brand-blue hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-lg shadow-lg transition duration-300 border-b-4 border-sky-900 active:border-b-0 active:mt-1">
+                    SAVE CHANGES
                 </button>
                 
-                <div class="mt-4 border-t border-gray-700 pt-4">
-                    <h3 class="text-md font-semibold text-white mb-2">Floor Plan Image</h3>
+                <div class="mt-4 pt-4 border-t border-brand-muted">
                     <form id="uploadForm" class="flex flex-col gap-2">
-                        <input type="file" id="floorImageInput" name="floorImage" accept="image/*" class="text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-gray-600 file:text-white hover:file:bg-gray-500 cursor-pointer">
-                        <button type="submit" class="w-full bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
+                        <input type="file" id="floorImageInput" name="floorImage" accept="image/*" class="text-xs text-brand-light file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-brand-dark file:text-brand-gold hover:file:bg-black cursor-pointer">
+                        <button type="submit" class="w-full bg-brand-orange hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm">
                             Upload Floor Plan
                         </button>
                     </form>
@@ -92,70 +140,97 @@
             </div>
         </div>
         
-        <div id="mapContainer" class="w-full max-w-4xl max-h-[75vh] aspect-video bg-gray-800 rounded-lg shadow-inner border border-gray-700 flex-shrink-0 relative overflow-hidden">
-            <svg id="mapSvg" width="100%" height="100%" viewBox="0 0 800 500" class="w-full h-full"></svg>
+        <div class="flex flex-col w-full max-w-4xl space-y-2">
             
-            <div id="mapLegend" class="absolute bottom-2 left-2 bg-gray-900 bg-opacity-90 p-2 rounded-md text-xs text-gray-300 w-48 collapsed z-10 border border-gray-700">
-                <div id="mapLegendHeader" class="font-semibold cursor-pointer flex justify-between items-center select-none">
-                    <span>Legend</span>
-                    <span id="legendToggleIcon" class="ml-2 transform transition-transform duration-300">▼</span>
-                </div>
-                <div id="mapLegendContent" class="space-y-1 transition-all duration-300 ease-in-out overflow-hidden mt-1">
-                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-gray-700 mr-2 border border-gray-400"></span>Room</div>
-                    <div class="flex items-center"><span class="w-3 h-3 rounded-full mr-2" style="background-color: #63b3ed;"></span>Stairs</div>
-                    <div class="flex items-center"><span class="w-3 h-3 rounded-full mr-2" style="background-color: #f6ad55;"></span>Public Elevator</div>
-                    <div class="flex items-center"><span class="w-3 h-3 rounded-full mr-2" style="background-color: #dd6b20;"></span>Employee Elevator</div>
-                    <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-gray-400 mr-2"></span>Hallway Node</div>
+            <div id="zoomControls" class="hidden items-center justify-end space-x-3 w-full bg-brand-olive bg-opacity-20 p-2 rounded-lg border border-brand-muted">
+                <span class="text-xs text-brand-gold font-bold uppercase">Zoom</span>
+                <input type="range" id="zoomSlider" min="0.5" max="3" step="0.1" value="1" class="w-32 h-2 bg-brand-dark rounded-lg appearance-none cursor-pointer accent-brand-gold">
+                <button id="resetZoomBtn" class="text-xs bg-brand-dark hover:bg-black px-3 py-1 rounded text-brand-gold border border-brand-gold transition">Reset</button>
+            </div>
+
+            <div id="mapContainer" class="w-full max-h-[75vh] aspect-video bg-brand-charcoal rounded-xl shadow-2xl border-4 border-brand-olive relative overflow-hidden">
+                <svg id="mapSvg" width="100%" height="100%" viewBox="0 0 800 500" class="w-full h-full"></svg>
+                
+                <div id="mapLegend" class="absolute bottom-3 left-3 bg-brand-dark bg-opacity-95 p-3 rounded-lg text-xs text-brand-light w-48 collapsed z-10 border border-brand-muted shadow-lg">
+                    <div id="mapLegendHeader" class="font-bold text-brand-gold cursor-pointer flex justify-between items-center select-none uppercase tracking-wide">
+                        <span>Map Key</span>
+                        <span id="legendToggleIcon" class="ml-2 transform transition-transform duration-300 text-white">▼</span>
+                    </div>
+                    <div id="mapLegendContent" class="space-y-2 transition-all duration-300 ease-in-out overflow-hidden mt-2 pt-2 border-t border-gray-700">
+                        <div class="flex items-center"><span class="w-3 h-3 rounded-full bg-brand-charcoal mr-2 border border-white"></span>Room</div>
+                        <div class="flex items-center"><span class="w-3 h-3 rounded-full mr-2 bg-brand-blue"></span>Stairs</div>
+                        <div class="flex items-center"><span class="w-3 h-3 rounded-full mr-2 bg-brand-gold"></span>Public Elevator</div>
+                        <div class="flex items-center"><span class="w-3 h-3 rounded-full mr-2 bg-brand-orange"></span>Staff Elevator</div>
+                    </div>
                 </div>
             </div>
         </div>
 
     </div>
     
-    <div class="w-full max-w-4xl bg-gray-800 p-6 rounded-lg shadow-lg mt-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="w-full max-w-4xl bg-brand-olive p-6 rounded-xl shadow-xl mt-6 border border-brand-muted">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
             
-            <div class="space-y-4">
+            <div class="space-y-5">
                 <div>
-                    <label class="block text-sm font-medium text-gray-300 mb-2">Your Role</label>
+                    <label class="block text-sm font-bold text-brand-gold uppercase tracking-wider mb-3">Select Identity</label>
                     <div id="roleSelector" class="flex flex-wrap gap-2">
                         </div>
                 </div>
 
-                <div class="pt-4 space-y-2">
-                    <label class="block text-sm font-medium text-gray-300">Route Selection</label>
-                    <div class="flex items-center space-x-2">
-                        <span class="font-medium text-gray-400">Start:</span>
-                        <span id="selectedStartDisplay" class="text-lg font-semibold text-green-400">None</span>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                        <span class="font-medium text-gray-400">End:</span>
-                        <span id="selectedEndDisplay" class="text-lg font-semibold text-red-400">None</span>
+                <div class="pt-4 space-y-3 border-t border-brand-muted">
+                    <label class="block text-sm font-bold text-brand-gold uppercase tracking-wider">Navigation</label>
+                    <div class="bg-brand-dark bg-opacity-40 p-4 rounded-lg space-y-2">
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-400 text-sm">From:</span>
+                            <span id="selectedStartDisplay" class="text-md font-bold text-white">Select on Map</span>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <span class="font-medium text-gray-400 text-sm">To:</span>
+                            <span id="selectedEndDisplay" class="text-md font-bold text-white">Select on Map</span>
+                        </div>
                     </div>
                 </div>
                 
-                <button id="findPathBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-md transition duration-300">
-                    Find Path
+                <button id="findPathBtn" class="w-full bg-brand-gold hover:bg-yellow-400 text-brand-dark font-black text-lg py-3 px-4 rounded-lg shadow-lg transition duration-300 uppercase tracking-widest">
+                    Navigate
                 </button>
             </div>
 
-            <div id="pathResult">
-                <h2 class="text-lg font-semibold text-white">Route</h2>
-                <div id="pathInstructions" class="text-gray-300 mt-2 space-y-1 h-48 overflow-y-auto pr-2 custom-scrollbar">
-                    <p class="text-gray-500">Click a room on the map to select a start point.</p>
+            <div id="pathResult" class="bg-brand-dark bg-opacity-40 p-4 rounded-lg border border-brand-muted h-full">
+                <h2 class="text-md font-bold text-brand-gold uppercase tracking-wider mb-2">Guidance</h2>
+                <div id="pathInstructions" class="text-gray-200 mt-2 space-y-2 h-56 overflow-y-auto pr-2 custom-scrollbar text-sm leading-relaxed">
+                    <p class="text-gray-500 italic">Select start and end points to begin.</p>
                 </div>
             </div>
 
         </div>
     </div>
     
-    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-60 hidden items-center justify-center z-50 backdrop-blur-sm">
-        <div class="bg-gray-800 rounded-lg p-6 shadow-xl w-full max-w-sm border border-gray-700 transform transition-all scale-100">
-            <h3 id="modalTitle" class="text-lg font-bold text-white mb-2">Confirm Action</h3>
-            <p id="modalMessage" class="text-gray-300 mb-6">Are you sure?</p>
-            <div class="flex justify-end space-x-3">
-                <button id="modalCancelBtn" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition">Cancel</button>
-                <button id="modalConfirmBtn" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-md transition shadow-md">Confirm</button>
+    <div id="shortcutModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-[100] backdrop-blur-sm">
+        <div class="bg-brand-olive rounded-xl p-6 shadow-2xl w-full max-w-md border-2 border-brand-muted">
+            <div class="flex justify-between items-center mb-6 border-b border-brand-muted pb-4">
+                <h3 class="text-xl font-bold text-brand-gold font-serif">Keyboard Shortcuts</h3>
+                <button id="btnCloseSettings" class="text-gray-300 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <div id="shortcutList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                </div>
+
+            <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-brand-muted">
+                <button id="btnResetShortcuts" class="px-4 py-2 text-sm text-brand-orange hover:text-red-300 underline decoration-dotted">Reset Defaults</button>
+                <button id="btnSaveShortcuts" class="px-6 py-2 bg-brand-blue hover:bg-sky-600 text-white rounded-lg font-bold shadow-md">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 backdrop-blur-sm">
+        <div class="bg-brand-olive rounded-xl p-8 shadow-2xl w-full max-w-sm border-2 border-brand-muted transform transition-all scale-100 text-center">
+            <h3 id="modalTitle" class="text-xl font-bold text-brand-gold mb-3 font-serif">Confirm Action</h3>
+            <p id="modalMessage" class="text-white mb-8">Are you sure?</p>
+            <div class="flex justify-center space-x-4">
+                <button id="modalCancelBtn" class="px-5 py-2 bg-brand-dark hover:bg-gray-800 text-white rounded-lg transition font-semibold border border-gray-600">Cancel</button>
+                <button id="modalConfirmBtn" class="px-5 py-2 bg-brand-orange hover:bg-red-600 text-white rounded-lg transition shadow-lg font-bold">Confirm</button>
             </div>
         </div>
     </div> 
