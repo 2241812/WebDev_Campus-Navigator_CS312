@@ -1,4 +1,23 @@
 services:
+  go-app:
+    build:
+      context: .
+      dockerfile: Dockerfile.go
+    container_name: bravo_go
+    restart: always
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=mysql_db
+      - DB_USER=root
+      - DB_PASS=admin123
+      - DB_NAME=graphDB
+    depends_on:
+      mysql_db:
+        condition: service_healthy
+    networks:
+      - app_network
+
   mysql_db:
     image: mysql:8.0
     container_name: bravo_mysql
@@ -15,7 +34,7 @@ services:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-padmin123"]
       interval: 5s
       timeout: 5s
-      retries: 10  
+      retries: 10
 
   nodejs_service:
     build:

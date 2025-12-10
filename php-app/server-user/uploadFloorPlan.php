@@ -26,11 +26,6 @@ $fileData = file_get_contents($_FILES['floorImage']['tmp_name']);
 
 // Prepare Statement
 $stmt = $conn->prepare("INSERT INTO floor_images (floor_number, mime_type, image_data) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE mime_type = VALUES(mime_type), image_data = VALUES(image_data)");
-
-// 'ibs' = integer, blob, string (but mime_type is string). Actually 'isb' -> int, string, blob
-// Note: sending blob via bind_param can be tricky with large files, usually 'b' requires send_long_data.
-// Let's use the 'b' type correctly.
-
 $null = NULL;
 $stmt->bind_param("isb", $floorNumber, $fileType, $null);
 $stmt->send_long_data(2, $fileData);

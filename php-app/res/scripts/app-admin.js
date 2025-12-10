@@ -359,6 +359,8 @@ App.AdminEditor = {
             if (access && type === 'elevator') s += `[data-access="${access}"]`;
             document.querySelector(s)?.classList.add('ring-2', 'ring-offset-2', 'ring-indigo-500');
         }
+
+        App.Renderer.redrawMapElements(); 
     },
 
     handleMapClick: (evt) => {
@@ -450,13 +452,40 @@ App.AdminEditor = {
     },
 
     _handleConnectNodes: (nodeId) => {
-        if (!App.AdminEditor.editMode.firstNodeId) App.AdminEditor.editMode.firstNodeId = nodeId;
-        else {
+        if (!App.AdminEditor.editMode.firstNodeId) {
+            // First click: Select the start node
+            App.AdminEditor.editMode.firstNodeId = nodeId;
+            
+            // Visual feedback + Instruction
+            App.Renderer.redrawMapElements(); 
+            const nodeName = App.mapData.nodes.find(n => n.id === nodeId)?.name || "Node";
+            
+            // Optional: Show a temporary alert or log to guide the user
+            console.log(`Selected ${nodeName}. Now click a node on ANY floor to connect.`);
+            // You could replace this console.log with a UI toast if you have one.
+            
+        } else {
+            // Second click: Create the connection
             if (App.AdminEditor.editMode.firstNodeId !== nodeId) {
-                App.mapData.edges.push({ source: App.AdminEditor.editMode.firstNodeId, target: nodeId });
+                // Check if connection already exists to avoid duplicates
+                const start = App.AdminEditor.editMode.firstNodeId;
+                const end = nodeId;
+                const exists = App.mapData.edges.some(e => 
+                    (e.source === start && e.target === end) || 
+                    (e.source === end && e.target === start)
+                );
+
+                if (!exists) {
+                    App.mapData.edges.push({ source: start, target: end });
+                    console.log(`Connected successfully!`);
+                } else {
+                    console.log("Connection already exists.");
+                }
+
                 App.Utils.buildGraphMap();
                 App.Renderer.redrawMapElements();
             }
+            // Reset selection
             App.AdminEditor.editMode.firstNodeId = null;
         }
     },

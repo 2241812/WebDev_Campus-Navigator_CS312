@@ -259,6 +259,7 @@ function initializeApp() {
             App.DOM.edgeContainer.appendChild(edgeFragment);
 
             // 2. DRAW NODES
+            // 2. DRAW NODES
             const nodeFragment = document.createDocumentFragment();
             nodesToDraw.forEach(node => {
                 const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -269,7 +270,6 @@ function initializeApp() {
                 if (node.type === 'hallway') group.classList.add('hallway-group'); 
                 else group.classList.add('node-label-group');
                 
-                // Data attribute for Admin Event Delegation
                 group.dataset.nodeId = node.id;
 
                 const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
@@ -287,7 +287,6 @@ function initializeApp() {
                 // State Styling
                 if (isAdmin) {
                     nodeClass += ' draggable';
-                    // Highlight selected node in Connect/Disconnect modes
                     if (typeof App.AdminEditor !== 'undefined' && App.AdminEditor.editMode.firstNodeId === node.id) {
                         nodeClass += ' selected-for-action';
                     }
@@ -298,6 +297,27 @@ function initializeApp() {
                 }
 
                 if (node.type === 'elevator' && node.access === 'employee') nodeClass += ' elevator-employee';
+
+                // --- NEW: VERTICAL CONNECTION VISUALIZER ---
+                // Checks if this node has an edge connecting to a DIFFERENT floor
+                const neighbors = App.adjacencyList.get(node.id) || [];
+                const hasVerticalConnection = neighbors.some(neighborId => {
+                    const neighbor = nodeMap.get(neighborId);
+                    return neighbor && neighbor.floor !== node.floor;
+                });
+
+                // --- UPDATE: Only show rings if Admin is using the CONNECT TOOL ---
+                const isConnectMode = (typeof App.AdminEditor !== 'undefined' 
+                                    && App.AdminEditor.editMode 
+                                    && App.AdminEditor.editMode.mode === 'connect');
+
+                if (hasVerticalConnection && isConnectMode) {
+                    circle.setAttribute('stroke', '#32CD32'); // Lime Green
+                    circle.setAttribute('stroke-width', '4');
+                    circle.setAttribute('stroke-dasharray', '4,2');
+                }
+                // -------------------------------------------
+
                 circle.setAttribute('class', nodeClass);
                 group.appendChild(circle);
 
@@ -311,7 +331,6 @@ function initializeApp() {
                     group.appendChild(text);
                 }
                 
-                // Interactions: ONLY Student Logic here. Admin logic moved to app-admin.js
                 if (!isAdmin) {
                     group.addEventListener('click', (e) => {
                         e.stopPropagation();
@@ -321,7 +340,6 @@ function initializeApp() {
                 nodeFragment.appendChild(group);
             });
             App.DOM.nodeContainer.appendChild(nodeFragment);
-
             // 3. DRAW PERSISTENT PATH
             if (App.State.activePath) {
                 App.Pathfinder.renderPersistentPath(floor);
@@ -404,51 +422,29 @@ function initializeApp() {
             return Math.max(1, Math.round(Math.hypot(sourceNode.x - targetNode.x, sourceNode.y - targetNode.y) / 10));
         },
 
-        findShortestPath: (startId, endId) => {
-            const distances = {};
-            const previous = {};
-            const pq = new Map();
-            const nodeMap = new Map(App.mapData.nodes.map(n => [n.id, n]));
-            
-            App.mapData.nodes.forEach(node => { 
-                distances[node.id] = Infinity; 
-                previous[node.id] = null; 
-            });
-            distances[startId] = 0; 
-            pq.set(startId, 0);
-            
-            const isAccessible = App.RoleManager.isNodeAccessible;
+        findShortestPath: async (startId, endId) => {
+            try {
+                // Get the current role from App State (student, pwd-student, employee)
+                const currentRole = App.State.currentRole || 'student'; 
 
-            while (pq.size > 0) {
-                let closestNodeId = null; 
-                let minDistance = Infinity;
-                for (const [nodeId, dist] of pq) { 
-                    if (dist < minDistance) { minDistance = dist; closestNodeId = nodeId; } 
-                }
-
-                if (closestNodeId === endId || closestNodeId === null || distances[closestNodeId] === Infinity) break;
-                pq.delete(closestNodeId);
-                const closestNode = nodeMap.get(closestNodeId);
-
-                if (!isAccessible(closestNode)) continue;
+                const response = await fetch('http://localhost:8080/api/path', {
+                    method: 'POST',
+                    // Send role to Go
+                    body: JSON.stringify({ 
+                        start: startId, 
+                        end: endId,
+                        role: currentRole 
+                    })
+                });
                 
-                const neighbors = App.adjacencyList.get(closestNodeId) || [];
-                for (const neighborId of neighbors) {
-                    const neighborNode = nodeMap.get(neighborId);
-                    if (!neighborNode || !isAccessible(neighborNode)) continue;
-                    
-                    const newDist = distances[closestNodeId] + App.Pathfinder.getWeight(closestNode, neighborNode);
-                    if (newDist < distances[neighborId]) {
-                        distances[neighborId] = newDist;
-                        previous[neighborId] = closestNodeId;
-                        pq.set(neighborId, newDist);
-                    }
-                }
+                if (!response.ok) throw new Error("Go Service Response Error");
+                
+                const data = await response.json();
+                return data.path; 
+            } catch (e) {
+                console.error("Go Service Error:", e);
+                return null;
             }
-            const path = []; 
-            let currentNode = endId;
-            while (currentNode) { path.unshift(currentNode); currentNode = previous[currentNode]; }
-            return path[0] === startId ? path : null;
         },
 
         highlightStep: (fromId, toId) => {
@@ -476,7 +472,7 @@ function initializeApp() {
             }
         },
 
-        handleFindPath: () => {
+        handleFindPath: async () => {  
             App.Pathfinder.clearHighlights(false);
             const startId = App.State.selectedStartId;
             const endId = App.State.selectedEndId;
@@ -486,10 +482,14 @@ function initializeApp() {
                 return; 
             }
             
-            const path = App.Pathfinder.findShortestPath(startId, endId);
+           
+            App.DOM.pathInstructions.innerHTML = '<p>Calculating...</p>';
+
+           
+            const path = await App.Pathfinder.findShortestPath(startId, endId); // <--- Add await here
             
-            if (path) {
-                App.State.activePath = path; // SAVE PATH
+            if (path && path.length > 0) {
+                App.State.activePath = path;
                 App.Pathfinder.animatePath(path, 0);
             } else {
                 App.DOM.pathInstructions.innerHTML = '<p class="text-red-400 font-bold">No path found. Check role access.</p>'; 

@@ -67,6 +67,12 @@ try {
     // Update Version
     $newTime = time() * 1000;
     $conn->query("INSERT INTO settings (setting_key, setting_value) VALUES ('map_version', '$newTime') ON DUPLICATE KEY UPDATE setting_value = '$newTime'");
+    $ch = curl_init("http://go-app:8080/api/refresh");
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 1); 
+    curl_exec($ch);
+    curl_close($ch);
+   
 
     $conn->commit();
     echo json_encode(["success" => true, "message" => "Map saved successfully!"]);
