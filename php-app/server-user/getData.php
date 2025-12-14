@@ -3,19 +3,12 @@
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 
-// DOCKER CONNECTION SETTINGS
-$servername = "mysql_db";  
-$username = "root";
-$password = "admin123";    
-$dbname = "graphDB";
+// --- REFACTOR: Use centralized connection utility ---
+require_once __DIR__ . '/db_utils.php';
 
-// Create connection
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-// Check connection
-if ($conn->connect_error) {
-    die(json_encode(["error" => "Connection failed to Docker DB: " . $conn->connect_error]));
-}
+// Create and check connection using the utility function
+$conn = getDatabaseConnection();
+// --- END REFACTOR ---
 
 // 1. Fetch Nodes
 $nodesResult = $conn->query("SELECT * FROM nodes");

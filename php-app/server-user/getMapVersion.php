@@ -4,12 +4,12 @@ header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 header('Cache-Control: no-cache, no-store, must-revalidate');
 
-// DOCKER CONNECTION SETTINGS
-$conn = new mysqli("mysql_db", "root", "admin123", "graphDB");
+// --- REFACTOR: Use centralized connection utility ---
+require_once __DIR__ . '/db_utils.php';
 
-if ($conn->connect_error) {
-    die(json_encode(["error" => "Connection failed"]));
-}
+// Create and check connection using the utility function
+$conn = getDatabaseConnection();
+// --- END REFACTOR ---
 
 $result = $conn->query("SELECT setting_value FROM settings WHERE setting_key = 'map_version'");
 $lastUpdated = 0;

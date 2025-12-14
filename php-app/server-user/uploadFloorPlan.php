@@ -3,17 +3,13 @@
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json');
 
-// --- DOCKER CREDENTIALS ---
-$servername = "mysql_db"; 
-$username = "root";
-$password = "admin123";
-$dbname = "graphDB";
+// --- REFACTOR: Use centralized connection utility ---
+require_once __DIR__ . '/db_utils.php';
 
-$conn = new mysqli($servername, $username, $password, $dbname);
-
-if ($conn->connect_error) {
-    die(json_encode(["success" => false, "message" => "Database connection failed."]));
-}
+// Create and check connection using the utility function
+// The utility handles the connection and exits gracefully on failure
+$conn = getDatabaseConnection(); 
+// --- END REFACTOR ---
 
 // Check if file exists
 if (!isset($_FILES['floorImage']) || !isset($_POST['floorNumber'])) {
