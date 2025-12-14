@@ -644,7 +644,7 @@ function initializeApp() {
 
         const logoutBtn = document.getElementById('logoutBtn');
         if (logoutBtn) {
-            logoutBtn.textContent = App.State.isAdminLoggedIn ? "Home" : "Home";
+            logoutBtn.textContent = App.State.isAdminLoggedIn ? "Logout" : "Logout";
             logoutBtn.addEventListener('click', async () => {
                 if (App.State.isAdminLoggedIn) {
                     await fetch('http://localhost:3000/api/logout', { method: 'POST', credentials: 'include' });
