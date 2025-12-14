@@ -2,6 +2,34 @@ document.addEventListener('DOMContentLoaded', () => {
     const loginForm = document.getElementById('loginForm');
     const errorMsg = document.getElementById('login-error');
 
+    async function checkAdminSession() {
+        try {
+            const response = await fetch('http://localhost:3000/api/admin/check-session', {
+                method: 'GET',
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                if (result.isAdmin) {
+                    window.location.href = 'mainpage.html';
+                } else {
+    
+                    if (loginForm) loginForm.classList.remove('hidden');
+                }
+            } else {
+            
+                if (loginForm) loginForm.classList.remove('hidden');
+            }
+        } catch (err) {
+            console.error('Session check failed:', err);
+
+            if (loginForm) loginForm.classList.remove('hidden');
+        }
+    }
+    
+    checkAdminSession();
+
     if (loginForm) {
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -49,3 +77,4 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+

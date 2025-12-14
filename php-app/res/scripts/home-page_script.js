@@ -26,14 +26,35 @@ function resetHomePageUI() {
     console.log("UI Reset to Entry State");
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    // 2. Silent Logout on Load
-    fetch('http://localhost:3000/api/logout', { 
-        method: 'POST', 
-        credentials: 'include' 
-    }).catch(() => {});
+// home-page_script.js
+function resetHomePageUI() {
+    const introScreen = document.getElementById('intro-screen');
+    const loadingScreen = document.getElementById('loading-screen');
+    const welcomeText = document.getElementById('welcome-text');
+    const transitionBg = document.getElementById('transition-bg');
+    const bravoImage = document.getElementById('bravo-img');
+    const compassButton = document.getElementById('compass-btn');
+    const loginBtn = document.getElementById('admin-login-btn');
 
-    // 3. Initial UI Reset
+    if (!introScreen || !loadingScreen) return;
+
+    // Reset Visuals
+    introScreen.classList.remove('hidden', 'zoom-effect');
+    loadingScreen.classList.add('hidden');
+    loadingScreen.classList.remove('fade-in');
+    
+    if (welcomeText) welcomeText.classList.remove('text-fade-out');
+    if (transitionBg) transitionBg.classList.remove('bg-fade-in');
+    if (bravoImage) bravoImage.classList.remove('bravo-hover-effect');
+    
+    // Unlock Controls
+    if (compassButton) compassButton.style.pointerEvents = 'auto';
+    if (loginBtn) loginBtn.style.display = 'block';
+    
+    console.log("UI Reset to Entry State");
+}
+
+document.addEventListener('DOMContentLoaded', () => {
     resetHomePageUI();
 
     const elements = {
