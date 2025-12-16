@@ -155,6 +155,7 @@ function fetchFloorPlans(mysqli $conn): array
         // Convert BLOB to Base64 for frontend display
         $base64 = base64_encode($row['image_data']);
         
+        // Construct the full Data URI scheme required by <image href="..."> in app-main.js
         $floorPlans[$floorNum] = "data:{$mimeType};base64,{$base64}";
     }
 
