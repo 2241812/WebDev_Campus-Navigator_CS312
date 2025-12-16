@@ -36,7 +36,7 @@ services:
       timeout: 5s
       retries: 10
 
-  nodejs_service:
+  nodejs_service_server:
     build:
       context: .
       dockerfile: Dockerfile.nodejs
@@ -69,7 +69,7 @@ services:
       mysql_db:
         condition: service_healthy
 
-  phpmyadmin:
+  phpmyadmin_GUI:
     image: phpmyadmin/phpmyadmin
     container_name: bravo_pma
     restart: always
