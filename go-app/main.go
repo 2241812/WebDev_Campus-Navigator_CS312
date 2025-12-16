@@ -20,13 +20,13 @@ type Node struct {
 	X      int    `json:"x"`
 	Y      int    `json:"y"`
 	Type   string `json:"type"`
-	Access string `json:"access"` // NEW: Stores 'all' or 'employee'
+	Access string `json:"access"` // Stores 'all' or 'employee'
 }
 
 type PathRequest struct {
 	Start string `json:"start"`
 	End   string `json:"end"`
-	Role  string `json:"role"` // NEW: 'student', 'pwd-student', 'employee'
+	Role  string `json:"role"` // 'student', 'pwd-student', 'employee'
 }
 
 type PathResponse struct {
