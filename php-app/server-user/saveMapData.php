@@ -21,6 +21,7 @@ ini_set('display_errors', '0');
 header('Access-Control-Allow-Origin: *');
 header('Content-Type: application/json; charset=UTF-8');
 
+// Use the centralized connection utility
 require_once __DIR__ . '/db_utils.php';
 
 try {
@@ -51,15 +52,11 @@ try {
         saveFloorLabels($conn, $data['floorLabels']);
     }
 
-    // 4. Update Versioning
+    // 4. Update Versioning (Consistent with Node.js service)
     updateMapVersion($conn);
 
     // 5. Commit Transaction
     $conn->commit();
-
-    // 6. Notify External Services (Go App)
-    // We do this after commit so the Go app reads the *new* data.
-    notifyGoService();
 
     echo json_encode(['success' => true, 'message' => 'Map data saved successfully!']);
 
@@ -167,11 +164,13 @@ function saveFloorLabels(mysqli $conn, array $floorLabels): void
 
 /**
  * Updates the 'map_version' setting with the current timestamp.
+ * This aligns with how uploadFloorPlan.php updates the version.
  */
 function updateMapVersion(mysqli $conn): void
 {
     $newTime = (string) (time() * 1000);
     
+    // Use INSERT ... ON DUPLICATE KEY UPDATE to handle both fresh creates and updates
     $stmt = $conn->prepare(
         "INSERT INTO settings (setting_key, setting_value) 
          VALUES ('map_version', ?) 
@@ -181,25 +180,5 @@ function updateMapVersion(mysqli $conn): void
     $stmt->bind_param("ss", $newTime, $newTime);
     $stmt->execute();
     $stmt->close();
-}
-
-/**
- * Pings the Go microservice to trigger a graph reload.
- */
-function notifyGoService(): void
-{
-    $url = "http://go-app:8080/api/refresh";
-    
-    $ch = curl_init($url);
-    curl_setopt_array($ch, [
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_TIMEOUT        => 1, // Don't wait long, just trigger it
-        CURLOPT_NOBODY         => true // We don't need the body
-    ]);
-    
-    curl_exec($ch);
-    // We ignore errors here intentionally; if the Go app is down,
-    // the save is still valid in MySQL.
-    curl_close($ch);
 }
 ?>
