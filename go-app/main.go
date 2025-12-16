@@ -14,31 +14,35 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 )
 
+// Represents a location point on the map
 type Node struct {
 	ID     string `json:"id"`
 	Floor  int    `json:"floor"`
 	X      int    `json:"x"`
 	Y      int    `json:"y"`
-	Type   string `json:"type"`
-	Access string `json:"access"` // Stores 'all' or 'employee'
+	Type   string `json:"type"`   // e.g., "hallway", "room", "elevator", "stairs"
+	Access string `json:"access"` // Authorization level: 'all' or 'employee'
 }
 
+// Payload for incoming path requests
 type PathRequest struct {
 	Start string `json:"start"`
 	End   string `json:"end"`
-	Role  string `json:"role"` // 'student', 'pwd-student', 'employee'
+	Role  string `json:"role"` // User role determines valid paths ('student', 'pwd-student', 'employee')
 }
 
 type PathResponse struct {
 	Path []string `json:"path"`
 }
 
+// Global graph state with mutex for thread-safe concurrent access
 var (
 	nodes = make(map[string]Node)
 	edges = make(map[string][]string)
 	mutex sync.RWMutex
 )
 
+// Helper to read environment variables (e.g., Docker container configs)
 func getEnv(key, fallback string) string {
 	if value, exists := os.LookupEnv(key); exists {
 		return value
@@ -47,6 +51,7 @@ func getEnv(key, fallback string) string {
 }
 
 func main() {
+	// Database connection configuration
 	dbHost := getEnv("DB_HOST", "mysql_db")
 	dbUser := getEnv("DB_USER", "root")
 	dbPass := getEnv("DB_PASS", "admin123")
@@ -58,6 +63,7 @@ func main() {
 	var db *sql.DB
 	var err error
 
+	// Retry loop: Waits for the database container to be fully ready before crashing
 	for i := 0; i < 15; i++ {
 		db, err = sql.Open("mysql", dsn)
 		if err == nil && db.Ping() == nil {
@@ -71,9 +77,12 @@ func main() {
 		log.Fatal("Could not connect to DB:", err)
 	}
 
+	// Initial fetch of graph data into memory
 	loadGraph(db)
 
+	// API Endpoint: Calculates the shortest path
 	http.HandleFunc("/api/path", func(w http.ResponseWriter, r *http.Request) {
+		// Enable CORS for frontend access
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
@@ -90,6 +99,7 @@ func main() {
 		json.NewEncoder(w).Encode(PathResponse{Path: path})
 	})
 
+	// API Endpoint: Hot-reload graph data without restarting server
 	http.HandleFunc("/api/refresh", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		loadGraph(db)
@@ -100,11 +110,11 @@ func main() {
 	http.ListenAndServe(":8080", nil)
 }
 
+// loadGraph fetches nodes/edges from SQL and rebuilds the in-memory graph
 func loadGraph(db *sql.DB) {
-	mutex.Lock()
+	mutex.Lock() // Write lock to prevent reads during update
 	defer mutex.Unlock()
 
-	// Added 'access' column to query
 	nRows, err := db.Query("SELECT id, floor, x, y, type, access FROM nodes")
 	if err != nil {
 		log.Println("Error loading nodes:", err)
@@ -115,17 +125,19 @@ func loadGraph(db *sql.DB) {
 	nodes = make(map[string]Node)
 	for nRows.Next() {
 		var n Node
-		// Ensure your DB 'access' column defaults to 'all' if null
-		var access sql.NullString
+		var access sql.NullString // Handle potential NULLs in DB
+		
 		nRows.Scan(&n.ID, &n.Floor, &n.X, &n.Y, &n.Type, &access)
+		
 		if access.Valid {
 			n.Access = access.String
 		} else {
-			n.Access = "all"
+			n.Access = "all" // Default to public access
 		}
 		nodes[n.ID] = n
 	}
 
+	// Load connections (Adjacency List)
 	eRows, err := db.Query("SELECT source, target FROM edges")
 	if err != nil {
 		log.Println("Error loading edges:", err)
@@ -137,19 +149,22 @@ func loadGraph(db *sql.DB) {
 	for eRows.Next() {
 		var s, t string
 		eRows.Scan(&s, &t)
+		// Undirected graph: Add connection both ways
 		edges[s] = append(edges[s], t)
 		edges[t] = append(edges[t], s)
 	}
 	log.Printf("Graph loaded: %d nodes", len(nodes))
 }
 
+// findPath implements Dijkstra's Algorithm with role-based filtering
 func findPath(start, end, role string) []string {
-	mutex.RLock()
+	mutex.RLock() // Read lock allows concurrent path requests
 	defer mutex.RUnlock()
 
 	if _, ok := nodes[start]; !ok { return nil }
 	if _, ok := nodes[end]; !ok { return nil }
 
+	// Dijkstra initialization
 	dist := make(map[string]float64)
 	prev := make(map[string]string)
 	queue := make(map[string]float64)
@@ -162,6 +177,7 @@ func findPath(start, end, role string) []string {
 	queue[start] = 0
 
 	for len(queue) > 0 {
+		// Find node with smallest distance in queue
 		var u string
 		min := math.Inf(1)
 		for id, d := range queue {
@@ -174,40 +190,39 @@ func findPath(start, end, role string) []string {
 		if u == end || min == math.Inf(1) { break }
 		delete(queue, u)
 
-		// Get current node details for checks
 		nodeU := nodes[u]
 
 		for _, v := range edges[u] {
 			if _, inQ := queue[v]; inQ {
 				nodeV := nodes[v]
 
-				// --- 1. ACCESS CONTROL CHECK ---
-				// If role is NOT employee, they cannot traverse 'employee' nodes
+				// --- ACCESS CONTROL Logic ---
+				// If user is NOT an employee, block access to 'employee' zones
 				if role != "employee" {
 					if nodeV.Access == "employee" || (nodeV.Type == "elevator" && nodeV.Access == "employee") {
-						continue // Skip this neighbor
+						continue 
 					}
 				}
 
-				// --- 2. PWD CHECK ---
-				// PWD cannot use stairs
+				// --- PWD Logic ---
+				// Students with PWD role cannot traverse stairs
 				if role == "pwd-student" {
 					if nodeV.Type == "stairs" {
-						continue // Skip this neighbor
+						continue 
 					}
 				}
 
-				// --- 3. WEIGHT CALCULATION ---
+				// --- Cost Calculation ---
+				// Base cost is physical distance
 				weight := math.Sqrt(math.Pow(float64(nodeU.X-nodeV.X), 2) + math.Pow(float64(nodeU.Y-nodeV.Y), 2))
 				
-				// Floor Change Logic
+				// --- Floor Change Penalties ---
+				// We penalize vertical travel to prefer staying on the same floor when possible
 				if nodeU.Floor != nodeV.Floor {
 					if nodeV.Type == "elevator" {
-						// High penalty for waiting for elevator
-						weight += 300 
+						weight += 300 // Heavy penalty: Simulates wait time for elevator
 					} else if nodeV.Type == "stairs" {
-						// Lower penalty for stairs (faster than waiting)
-						weight += 50
+						weight += 50  // Light penalty: Simulates physical effort
 					}
 				}
 
@@ -221,6 +236,7 @@ func findPath(start, end, role string) []string {
 		}
 	}
 
+	// Reconstruct path by backtracking from End to Start
 	var path []string
 	curr := end
 	for curr != "" {
@@ -228,6 +244,7 @@ func findPath(start, end, role string) []string {
 		if curr == start { break }
 		curr = prev[curr]
 	}
+	
 	if len(path) > 0 && path[0] == start { return path }
 	return nil
 }
