@@ -4,6 +4,9 @@ window.App = {
 };
 
 function initializeApp() {
+    const serverIP = window.location.hostname;
+    const MAP_API = `http://${serverIP}:8080`;
+    const API_URL = `http://${serverIP}:3000`; 
     // --- DOM ELEMENTS CACHE ---
     App.DOM = {
         findPathBtn: document.getElementById('findPathBtn'),
@@ -423,7 +426,7 @@ function initializeApp() {
                 // Get the current role from App State (student, pwd-student, employee)
                 const currentRole = App.State.currentRole || 'student'; 
 
-                const response = await fetch('http://localhost:8080/api/path', {
+                const response = await fetch(`${MAP_API}/api/path`, {
                     method: 'POST',
                     // Send role to Go
                     body: JSON.stringify({ 
@@ -652,7 +655,7 @@ function initializeApp() {
         });
 
         try {
-            const response = await fetch('http://localhost:3000/api/admin/check-session', { credentials: 'include' });
+            const response = await fetch(`${API_URL}/api/admin/check-session`, { credentials: 'include' });
             const data = await response.json();
             App.State.isAdminLoggedIn = data.isAdmin;
         } catch (err) {
@@ -662,7 +665,7 @@ function initializeApp() {
         // Logout Logic - Handle both desktop and mobile buttons
         const handleLogout = async () => {
             if (App.State.isAdminLoggedIn) {
-                await fetch('http://localhost:3000/api/logout', { method: 'POST', credentials: 'include' });
+                await fetch(`${API_URL}/api/logout`, { method: 'POST', credentials: 'include' });
             }
             window.location.href = 'index.html';
         };

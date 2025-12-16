@@ -1,10 +1,17 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // ---------------------------------------------------------
+    // DYNAMIC CONFIGURATION
+    const serverIP = window.location.hostname;
+    const API_URL = `http://${serverIP}:3000`; 
+    // ---------------------------------------------------------
+
     const loginForm = document.getElementById('loginForm');
     const errorMsg = document.getElementById('login-error');
 
     async function checkAdminSession() {
         try {
-            const response = await fetch('http://localhost:3000/api/admin/check-session', {
+            // Updated to use dynamic API_URL
+            const response = await fetch(`${API_URL}/api/admin/check-session`, {
                 method: 'GET',
                 credentials: 'include'
             });
@@ -14,16 +21,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (result.isAdmin) {
                     window.location.href = 'mainpage.html';
                 } else {
-    
                     if (loginForm) loginForm.classList.remove('hidden');
                 }
             } else {
-            
                 if (loginForm) loginForm.classList.remove('hidden');
             }
         } catch (err) {
             console.error('Session check failed:', err);
-
             if (loginForm) loginForm.classList.remove('hidden');
         }
     }
@@ -37,7 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = Object.fromEntries(formData.entries());
 
             try {
-                const response = await fetch('http://localhost:3000/api/login', {
+                // Updated to use dynamic API_URL
+                const response = await fetch(`${API_URL}/api/login`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json'
@@ -66,7 +71,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (logoutBtn) {
         logoutBtn.addEventListener('click', async () => {
             try {
-                await fetch('http://localhost:3000/api/logout', {
+                // Updated to use dynamic API_URL
+                await fetch(`${API_URL}/api/logout`, {
                     method: 'POST',
                     credentials: 'include'
                 });
@@ -77,4 +83,3 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
-
