@@ -33,12 +33,20 @@ App.AdminEditor = {
         saveBtn: document.getElementById('saveToDbBtn'),
         uploadForm: document.getElementById('uploadForm'),
         floorImageInput: document.getElementById('floorImageInput'),
+        
+        // Settings Modal Elements
         btnOpenSettings: document.getElementById('btn-open-settings'),
         shortcutModal: document.getElementById('shortcutModal'),
         shortcutList: document.getElementById('shortcutList'),
         btnCloseSettings: document.getElementById('btnCloseSettings'),
         btnSaveShortcuts: document.getElementById('btnSaveShortcuts'),
-        btnResetShortcuts: document.getElementById('btnResetShortcuts')
+        btnResetShortcuts: document.getElementById('btnResetShortcuts'),
+
+        // Feature D: Upload Help Modal Elements
+        btnUploadHelp: document.getElementById('btnUploadHelp'),
+        uploadHelpModal: document.getElementById('uploadHelpModal'),
+        btnCloseUploadHelp: document.getElementById('btnCloseUploadHelp'),
+        btnOkUploadHelp: document.getElementById('btnOkUploadHelp')
     },
 
     init: () => {
@@ -78,10 +86,17 @@ App.AdminEditor = {
         document.getElementById('uploadForm')?.addEventListener('submit', App.AdminEditor.handleUploadFloorImage);
 
         const els = App.AdminEditor.adminDOMElements;
+        
+        // Settings Listeners
         if (els.btnOpenSettings) els.btnOpenSettings.addEventListener('click', App.AdminEditor.openSettings);
         if (els.btnCloseSettings) els.btnCloseSettings.addEventListener('click', App.AdminEditor.closeSettings);
         if (els.btnSaveShortcuts) els.btnSaveShortcuts.addEventListener('click', App.AdminEditor.closeSettings);
         if (els.btnResetShortcuts) els.btnResetShortcuts.addEventListener('click', App.AdminEditor.resetShortcuts);
+
+        // Feature D: Upload Help Listeners
+        if (els.btnUploadHelp) els.btnUploadHelp.addEventListener('click', () => els.uploadHelpModal.style.display = 'flex');
+        if (els.btnCloseUploadHelp) els.btnCloseUploadHelp.addEventListener('click', () => els.uploadHelpModal.style.display = 'none');
+        if (els.btnOkUploadHelp) els.btnOkUploadHelp.addEventListener('click', () => els.uploadHelpModal.style.display = 'none');
 
         window.addEventListener('keydown', App.AdminEditor.handleKeyDown);
         window.addEventListener('keyup', App.AdminEditor.handleKeyUp);
