@@ -152,7 +152,7 @@ function initializeApp() {
                 button.textContent = label;
                 
                 const isActive = App.State.currentFloor === floorNum;
-                button.className = `px-4 py-2 rounded-lg text-sm font-bold transition shadow-md ${
+                button.className = `px-4 py-2 rounded-lg text-sm font-bold transition shadow-md whitespace-nowrap ${
                     isActive 
                     ? 'bg-brand-blue text-white ring-2 ring-sky-400' 
                     : 'bg-brand-olive hover:bg-brand-muted text-gray-200'
@@ -259,7 +259,6 @@ function initializeApp() {
             App.DOM.edgeContainer.appendChild(edgeFragment);
 
             // 2. DRAW NODES
-            // 2. DRAW NODES
             const nodeFragment = document.createDocumentFragment();
             nodesToDraw.forEach(node => {
                 const group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
@@ -299,14 +298,12 @@ function initializeApp() {
                 if (node.type === 'elevator' && node.access === 'employee') nodeClass += ' elevator-employee';
 
                 // --- NEW: VERTICAL CONNECTION VISUALIZER ---
-                // Checks if this node has an edge connecting to a DIFFERENT floor
                 const neighbors = App.adjacencyList.get(node.id) || [];
                 const hasVerticalConnection = neighbors.some(neighborId => {
                     const neighbor = nodeMap.get(neighborId);
                     return neighbor && neighbor.floor !== node.floor;
                 });
 
-                // --- UPDATE: Only show rings if Admin is using the CONNECT TOOL ---
                 const isConnectMode = (typeof App.AdminEditor !== 'undefined' 
                                     && App.AdminEditor.editMode 
                                     && App.AdminEditor.editMode.mode === 'connect');
@@ -316,7 +313,6 @@ function initializeApp() {
                     circle.setAttribute('stroke-width', '4');
                     circle.setAttribute('stroke-dasharray', '4,2');
                 }
-                // -------------------------------------------
 
                 circle.setAttribute('class', nodeClass);
                 group.appendChild(circle);
@@ -376,7 +372,7 @@ function initializeApp() {
             // Create Bravo Marker (Hidden initially)
             const marker = document.createElementNS('http://www.w3.org/2000/svg', 'image');
             marker.setAttribute('id', 'userMarker');
-            marker.setAttribute('href', 'res/images/bravo_marker.png'); // IMPORTANT: Ensure file exists
+            marker.setAttribute('href', 'res/images/bravo_marker.png');
             marker.setAttribute('width', '40');
             marker.setAttribute('height', '40');
             marker.setAttribute('class', 'marker-bounce');
@@ -486,7 +482,7 @@ function initializeApp() {
             App.DOM.pathInstructions.innerHTML = '<p>Calculating...</p>';
 
            
-            const path = await App.Pathfinder.findShortestPath(startId, endId); // <--- Add await here
+            const path = await App.Pathfinder.findShortestPath(startId, endId); 
             
             if (path && path.length > 0) {
                 App.State.activePath = path;
@@ -634,6 +630,27 @@ function initializeApp() {
             });
         }
 
+        // Mobile Menu Logic
+        const mobileMenuBtn = document.getElementById('mobileMenuToggle');
+        const mobileMenu = document.getElementById('mobileMenu');
+        
+        if (mobileMenuBtn && mobileMenu) {
+            mobileMenuBtn.addEventListener('click', () => {
+                mobileMenu.classList.toggle('hidden');
+                mobileMenu.classList.toggle('flex');
+            });
+        }
+        
+        // Collapse mobile menu when a link is clicked
+        document.querySelectorAll('.mobile-nav-link').forEach(link => {
+            link.addEventListener('click', () => {
+                if(mobileMenu) {
+                    mobileMenu.classList.add('hidden');
+                    mobileMenu.classList.remove('flex');
+                }
+            });
+        });
+
         try {
             const response = await fetch('http://localhost:3000/api/admin/check-session', { credentials: 'include' });
             const data = await response.json();
@@ -642,16 +659,25 @@ function initializeApp() {
             App.State.isAdminLoggedIn = false;
         }
 
-        const logoutBtn = document.getElementById('logoutBtn');
-        if (logoutBtn) {
-            logoutBtn.textContent = App.State.isAdminLoggedIn ? "Logout" : "Logout";
-            logoutBtn.addEventListener('click', async () => {
-                if (App.State.isAdminLoggedIn) {
-                    await fetch('http://localhost:3000/api/logout', { method: 'POST', credentials: 'include' });
-                }
-                window.location.href = 'index.html';
-            });
-        }
+        // Logout Logic - Handle both desktop and mobile buttons
+        const handleLogout = async () => {
+            if (App.State.isAdminLoggedIn) {
+                await fetch('http://localhost:3000/api/logout', { method: 'POST', credentials: 'include' });
+            }
+            window.location.href = 'index.html';
+        };
+
+        const setupLogoutBtn = (id) => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                // Determine text based on state (optional visual cue, though HTML defaults to "Logout")
+                btn.textContent = App.State.isAdminLoggedIn ? "Logout" : "Logout";
+                btn.addEventListener('click', handleLogout);
+            }
+        };
+
+        setupLogoutBtn('logoutBtn');
+        setupLogoutBtn('logoutBtnMobile');
 
         App.DOM.findPathBtn.addEventListener('click', App.Pathfinder.handleFindPath);
         App.DOM.modalCancelBtn.addEventListener('click', App.Modal.hide);
