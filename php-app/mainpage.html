@@ -13,14 +13,14 @@
                 extend: {
                     colors: {
                         brand: {
-                            dark: '#202116',      /* Main Background */
-                            olive: '#4F4C3B',     /* Sidebar/Panels */
-                            gold: '#E4B31E',      /* Primary Buttons */
-                            orange: '#F26419',    /* Alert/Delete Buttons */
-                            muted: '#8B7E50',     /* Secondary Actions */
-                            light: '#9F987C',     /* Borders/Subtext */
-                            charcoal: '#2F4858',  /* Map Background */
-                            blue: '#33658A',      /* Edit Actions */
+                            dark: '#202116',
+                            olive: '#4F4C3B',
+                            gold: '#E4B31E',
+                            orange: '#F26419',
+                            muted: '#8B7E50',
+                            light: '#9F987C',
+                            charcoal: '#2F4858',
+                            blue: '#33658A',
                             sky: '#86BBD8'
                         }
                     },
@@ -37,19 +37,36 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Merriweather:wght@400;700;900&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="res/styles/mainpage.css?ver=7">
+    <link rel="stylesheet" href="res/styles/mainpage.css?ver=10">
 </head>
 
 <body class="bg-brand-dark text-white flex flex-col items-center min-h-screen p-4 md:p-6 space-y-6 antialiased font-sans">
 
-    <div class="flex items-center justify-between w-full max-w-7xl border-b border-brand-muted pb-4 mb-2">
-        <h1 class="text-4xl font-black text-brand-gold font-serif tracking-wide drop-shadow-md">Bravo's Compass</h1>
-        <button id="logoutBtn" class="bg-brand-muted hover:bg-brand-light text-white text-xs font-bold py-2 px-4 rounded-full border border-brand-light transition-colors duration-300 uppercase tracking-wider">
+    <div class="relative flex items-center justify-between w-full max-w-7xl border-b border-brand-muted pb-4 mb-2">
+        <h1 class="text-2xl md:text-4xl font-black text-brand-gold font-serif tracking-wide drop-shadow-md">Bravo's Compass</h1>
+        
+        <div class="hidden md:flex items-center space-x-6">
+            <a href="#aboutUs" class="text-brand-light hover:text-brand-gold font-bold transition-colors text-sm uppercase tracking-wider">About Us</a>
+            <button id="logoutBtn" class="bg-brand-muted hover:bg-brand-light text-white text-xs font-bold py-2 px-4 rounded-full border border-brand-light transition-colors duration-300 uppercase tracking-wider">
+                Logout
+            </button>
+        </div>
+
+        <button id="mobileMenuToggle" class="md:hidden text-brand-gold hover:text-white focus:outline-none p-2 transition-colors">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </button>
+    </div>
+
+    <div id="mobileMenu" class="hidden md:hidden w-full max-w-7xl bg-brand-olive rounded-lg shadow-xl border border-brand-muted p-4 mb-4 flex-col space-y-3">
+        <a href="#aboutUs" class="mobile-nav-link block w-full text-center py-3 text-white font-bold hover:text-brand-gold border-b border-brand-muted">About Us</a>
+        <button id="logoutBtnMobile" class="w-full bg-brand-muted hover:bg-brand-light text-white text-xs font-bold py-3 px-4 rounded-lg border border-brand-light transition-colors duration-300 uppercase tracking-wider">
             Logout
         </button>
     </div>
 
-    <div id="floorSelector" class="flex space-x-2 flex-shrink-0"></div>
+    <div id="floorSelector" class="flex space-x-2 flex-shrink-0 w-full max-w-7xl overflow-x-auto pb-2 custom-scrollbar"></div>
     
     <div id="mainContentWrapper" class="w-full max-w-7xl flex flex-col md:flex-row justify-center gap-8 items-start">
 
@@ -132,9 +149,14 @@
                 <div class="mt-4 pt-4 border-t border-brand-muted">
                     <form id="uploadForm" class="flex flex-col gap-2">
                         <input type="file" id="floorImageInput" name="floorImage" accept="image/*" class="text-xs text-brand-light file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:bg-brand-dark file:text-brand-gold hover:file:bg-black cursor-pointer">
-                        <button type="submit" class="w-full bg-brand-orange hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm">
-                            Upload Floor Plan
-                        </button>
+                        <div class="flex gap-2">
+                            <button type="submit" class="flex-grow bg-brand-orange hover:bg-red-500 text-white font-bold py-2 px-4 rounded-lg transition duration-300 text-sm">
+                                Upload Floor Plan
+                            </button>
+                            <button type="button" id="btnUploadHelp" class="bg-brand-blue hover:bg-sky-600 text-white font-bold py-2 px-3 rounded-lg transition duration-300 text-sm shadow-md" title="Upload Help">
+                                ?
+                            </button>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -148,7 +170,7 @@
                 <button id="resetZoomBtn" class="text-xs bg-brand-dark hover:bg-black px-3 py-1 rounded text-brand-gold border border-brand-gold transition">Reset</button>
             </div>
 
-            <div id="mapContainer" class="w-full max-h-[75vh] aspect-video bg-brand-charcoal rounded-xl shadow-2xl border-4 border-brand-olive relative overflow-hidden">
+            <div id="mapContainer" class="w-full h-[50vh] md:h-auto md:max-h-[75vh] md:aspect-video bg-brand-charcoal rounded-xl shadow-2xl border-4 border-brand-olive relative overflow-hidden">
                 <svg id="mapSvg" width="100%" height="100%" viewBox="0 0 800 500" class="w-full h-full"></svg>
                 
                 <div id="mapLegend" class="absolute bottom-3 left-3 bg-brand-dark bg-opacity-95 p-3 rounded-lg text-xs text-brand-light w-48 collapsed z-10 border border-brand-muted shadow-lg">
@@ -206,6 +228,25 @@
 
         </div>
     </div>
+
+    <div id="aboutUs" class="w-full max-w-7xl bg-brand-olive p-8 rounded-xl shadow-xl mt-8 border border-brand-muted text-center scroll-mt-20">
+        <div class="max-w-3xl mx-auto space-y-4">
+            <h2 class="text-3xl font-bold text-brand-gold font-serif mb-2">About Us</h2>
+            <div class="h-1 w-20 bg-brand-gold mx-auto mb-6 rounded-full"></div>
+            <p class="text-white text-lg leading-relaxed">
+                Welcome to <strong>Bravo's Compass</strong>, your dedicated navigation companion for the campus. 
+                Designed with accessibility and ease of use in mind, our platform helps students, faculty, and visitors 
+                find the quickest paths to their destinations.
+            </p>
+            <p class="text-brand-light">
+                Whether you are looking for a specific classroom, the nearest elevator, or a quick shortcut, 
+                Bravo's Compass is here to guide you.
+            </p>
+            <div class="pt-6 mt-6 border-t border-brand-light/30 text-sm text-brand-light">
+                &copy; 2025 Team Bravo. All Rights Reserved.
+            </div>
+        </div>
+    </div>
     
     <div id="shortcutModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-[100] backdrop-blur-sm">
         <div class="bg-brand-olive rounded-xl p-6 shadow-2xl w-full max-w-md border-2 border-brand-muted">
@@ -213,13 +254,36 @@
                 <h3 class="text-xl font-bold text-brand-gold font-serif">Keyboard Shortcuts</h3>
                 <button id="btnCloseSettings" class="text-gray-300 hover:text-white text-2xl">&times;</button>
             </div>
-            
-            <div id="shortcutList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
-                </div>
-
+            <div id="shortcutList" class="space-y-3 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar"></div>
             <div class="mt-6 flex justify-end gap-3 pt-4 border-t border-brand-muted">
                 <button id="btnResetShortcuts" class="px-4 py-2 text-sm text-brand-orange hover:text-red-300 underline decoration-dotted">Reset Defaults</button>
                 <button id="btnSaveShortcuts" class="px-6 py-2 bg-brand-blue hover:bg-sky-600 text-white rounded-lg font-bold shadow-md">Done</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="uploadHelpModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-[100] backdrop-blur-sm">
+        <div class="bg-brand-olive rounded-xl p-6 shadow-2xl w-full max-w-md border-2 border-brand-muted">
+            <div class="flex justify-between items-center mb-4 border-b border-brand-muted pb-3">
+                <h3 class="text-xl font-bold text-brand-gold font-serif">Upload Instructions</h3>
+                <button id="btnCloseUploadHelp" class="text-gray-300 hover:text-white text-2xl">&times;</button>
+            </div>
+            
+            <div class="space-y-4 text-gray-200 text-sm leading-relaxed">
+                <p>Follow these steps to upload a custom floor plan:</p>
+                <ol class="list-decimal list-inside space-y-2 marker:text-brand-gold">
+                    <li><strong>Select Floor:</strong> Use the floor tabs at the top of the screen to switch to the specific floor you want to edit.</li>
+                    <li><strong>Choose Image:</strong> Click "Choose File" in the admin panel and select your image (PNG, JPG, JPEG).</li>
+                    <li><strong>Upload:</strong> Click the "Upload Floor Plan" button.</li>
+                    <li><strong>Refresh:</strong> The page will reload automatically to apply the new background.</li>
+                </ol>
+                <div class="bg-brand-dark bg-opacity-50 p-3 rounded-lg border border-brand-muted mt-4 text-xs">
+                    <span class="text-brand-gold font-bold">Tip:</span> Ensure your image is high resolution for the best experience.
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button id="btnOkUploadHelp" class="px-6 py-2 bg-brand-blue hover:bg-sky-600 text-white rounded-lg font-bold shadow-md transition-colors">Got it</button>
             </div>
         </div>
     </div>
