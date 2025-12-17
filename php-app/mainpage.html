@@ -263,30 +263,34 @@
     </div>
 
     <div id="uploadHelpModal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center z-[100] backdrop-blur-sm">
-        <div class="bg-brand-olive rounded-xl p-6 shadow-2xl w-full max-w-md border-2 border-brand-muted">
-            <div class="flex justify-between items-center mb-4 border-b border-brand-muted pb-3">
-                <h3 class="text-xl font-bold text-brand-gold font-serif">Upload Instructions</h3>
-                <button id="btnCloseUploadHelp" class="text-gray-300 hover:text-white text-2xl">&times;</button>
-            </div>
+    <div class="bg-brand-olive rounded-xl p-6 shadow-2xl w-full max-w-md border-2 border-brand-muted">
+        <div class="flex justify-between items-center mb-4 border-b border-brand-muted pb-3">
+            <h3 class="text-xl font-bold text-brand-gold font-serif">Upload Instructions</h3>
+            <button id="btnCloseUploadHelp" class="text-gray-300 hover:text-white text-2xl">&times;</button>
+        </div>
+        
+        <div class="space-y-4 text-gray-200 text-sm leading-relaxed">
+            <p>Follow these steps to upload a custom floor plan:</p>
+            <ol class="list-decimal list-inside space-y-2 marker:text-brand-gold">
+                <li><strong>Select Floor:</strong> Use the floor tabs at the top of the screen to switch to the specific floor you want to edit.</li>
+                <li><strong>Choose Image:</strong> Click "Choose File" in the admin panel and select your image (PNG, JPG, JPEG).</li>
+                <li><strong>Upload:</strong> Click the "Upload Floor Plan" button.</li>
+                <li><strong>Refresh:</strong> The page will reload automatically to apply the new background.</li>
+            </ol>
             
-            <div class="space-y-4 text-gray-200 text-sm leading-relaxed">
-                <p>Follow these steps to upload a custom floor plan:</p>
-                <ol class="list-decimal list-inside space-y-2 marker:text-brand-gold">
-                    <li><strong>Select Floor:</strong> Use the floor tabs at the top of the screen to switch to the specific floor you want to edit.</li>
-                    <li><strong>Choose Image:</strong> Click "Choose File" in the admin panel and select your image (PNG, JPG, JPEG).</li>
-                    <li><strong>Upload:</strong> Click the "Upload Floor Plan" button.</li>
-                    <li><strong>Refresh:</strong> The page will reload automatically to apply the new background.</li>
-                </ol>
-                <div class="bg-brand-dark bg-opacity-50 p-3 rounded-lg border border-brand-muted mt-4 text-xs">
-                    <span class="text-brand-gold font-bold">Tip:</span> Ensure your image is high resolution for the best experience.
-                </div>
+            <div class="bg-brand-dark bg-opacity-50 p-3 rounded-lg border border-brand-muted mt-4 text-xs">
+                <span class="text-brand-gold font-bold">Tip:</span> Ensure your image is high resolution. 
+                <br><br>
+                Need to create a floor plan? <a href="https://boxy-svg.com/app" target="_blank" class="text-brand-orange hover:text-white underline">Use Boxy SVG Editor</a>.
             </div>
 
-            <div class="mt-6 flex justify-end">
-                <button id="btnOkUploadHelp" class="px-6 py-2 bg-brand-blue hover:bg-sky-600 text-white rounded-lg font-bold shadow-md transition-colors">Got it</button>
-            </div>
+        </div>
+
+        <div class="mt-6 flex justify-end">
+            <button id="btnOkUploadHelp" class="px-6 py-2 bg-brand-blue hover:bg-sky-600 text-white rounded-lg font-bold shadow-md transition-colors">Got it</button>
         </div>
     </div>
+</div>
 
     <div id="confirmationModal" class="fixed inset-0 bg-black bg-opacity-70 hidden items-center justify-center z-50 backdrop-blur-sm">
         <div class="bg-brand-olive rounded-xl p-8 shadow-2xl w-full max-w-sm border-2 border-brand-muted transform transition-all scale-100 text-center">
