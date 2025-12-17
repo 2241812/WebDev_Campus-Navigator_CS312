@@ -197,20 +197,24 @@ func findPath(start, end, role string) []string {
 				nodeV := nodes[v]
 
 				// --- ACCESS CONTROL Logic ---
-				// If user is NOT an employee, block access to 'employee' zones
-				if role != "employee" {
-					if nodeV.Access == "employee" || (nodeV.Type == "elevator" && nodeV.Access == "employee") {
-						continue 
-					}
-				}
+                // If user is NOT an employee, usually block access to 'employee' zones
+                if role != "employee" {
+                    if nodeV.Access == "employee" {
+                        // EXCEPTION: Allow PWD students to use Employee Elevators
+                        if role == "pwd-student" && nodeV.Type == "elevator" {         
+                        } else {
+                            continue 
+                        }
+                    }
+                }
 
-				// --- PWD Logic ---
-				// Students with PWD role cannot traverse stairs
-				if role == "pwd-student" {
-					if nodeV.Type == "stairs" {
-						continue 
-					}
-				}
+                // --- PWD Logic ---
+                // Students with PWD role cannot traverse stairs
+                if role == "pwd-student" {
+                    if nodeV.Type == "stairs" {
+                        continue 
+                    }
+                }
 
 				// --- Cost Calculation ---
 				// Base cost is physical distance

@@ -84,7 +84,8 @@ function initializeApp() {
     App.RoleManager = {
         roles: {
             'student': { label: 'Student', isNodeAccessible: (node) => node.access !== 'employee' },
-            'pwd-student': { label: 'PWD Student', isNodeAccessible: (node) => node.type !== 'stairs' && node.access !== 'employee' },
+            
+            'pwd-student': { label: 'PWD Student', isNodeAccessible: (node) => node.type !== 'stairs' && (node.access !== 'employee' || node.type === 'elevator') },
             'employee': { label: 'Employee', isNodeAccessible: () => true },
             'admin': { label: 'Admin', isNodeAccessible: () => true }
         },
