@@ -686,7 +686,7 @@ function initializeApp() {
         App.DOM.modalCancelBtn.addEventListener('click', App.Modal.hide);
         App.DOM.modalConfirmBtn.addEventListener('click', () => { if (App.State.modalConfirmCallback) App.State.modalConfirmCallback(); });
 
-        // NOTE: No click listeners attached here for Admin functions.
+        // No click listeners attached here for Admin functions.
         // Admin listeners are handled in app-admin.js via delegation.
 
         App.Utils.buildGraphMap();
