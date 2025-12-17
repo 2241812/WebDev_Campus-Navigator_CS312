@@ -1,9 +1,9 @@
 window.App = window.App || {};
 
 App.AdminEditor = {
-    // =============================================================================
+    // 
     //  STATE & CONFIGURATION
-    // =============================================================================
+    // 
     gridSize: 5,
     draggedNodeId: null,
     shiftPressed: false,
@@ -50,9 +50,9 @@ App.AdminEditor = {
         btnOkUploadHelp: document.getElementById('btnOkUploadHelp')
     },
 
-    // =============================================================================
+    // 
     //  INITIALIZATION & CORE EVENT DISPATCHERS
-    // =============================================================================
+    // 
     init: () => {
         App.AdminEditor.loadShortcuts();
         App.AdminEditor.updateTooltips();
@@ -117,9 +117,9 @@ App.AdminEditor = {
         App.AdminEditor.setEditMode(null);
     },
 
-    // =============================================================================
+    // 
     //  1. DRAGGING A NODE
-    // =============================================================================
+    // 
     handleMouseDown: (evt) => {
         const target = evt.target;
         const nodeGroup = target.closest('.node-group') || target.closest('g[id^="g-"]');
@@ -199,9 +199,9 @@ App.AdminEditor = {
         }
     },
 
-    // =============================================================================
+    // 
     //  2. ZOOMING THE MAP
-    // =============================================================================
+    //
     handleWheelZoom: (e) => {
         e.preventDefault();
         const direction = e.deltaY > 0 ? -0.1 : 0.1;
@@ -233,9 +233,9 @@ App.AdminEditor = {
         }
     },
 
-    // =============================================================================
+    //
     //  3. PANNING THE MAP
-    // =============================================================================
+    // 
     startPan: (evt) => {
         App.AdminEditor.viewState.isPanning = true;
         App.AdminEditor.viewState.startX = evt.clientX - App.AdminEditor.viewState.panX;
@@ -250,11 +250,11 @@ App.AdminEditor = {
         App.AdminEditor._updateMapTransform();
     },
 
-    // =============================================================================
+    // 
     //  4. ADDING A ROOM NODE
     //  5. ADDING HALLWAY / STAIRS / ELEVATOR
     //  (Logic Shared via _handleAddNode)
-    // =============================================================================
+    // 
     handleToolClick: (e) => {
         const mode = e.currentTarget.dataset.mode;
         App.AdminEditor.setEditMode(App.AdminEditor.editMode.mode === mode ? null : mode);
@@ -301,10 +301,10 @@ App.AdminEditor = {
 
     _generateNewNodeName: (type) => `${type}-${Date.now().toString().slice(-4)}`,
 
-    // =============================================================================
+    // 
     //  6. DRAW PATH MODE
     //  (Logic handled inside handleMapClick)
-    // =============================================================================
+    // 
     handleMapClick: (evt) => {
         const target = evt.target;
         
@@ -346,9 +346,9 @@ App.AdminEditor = {
         else if (mode === 'rename-node' && targetNode) App.AdminEditor._handleRenameNode(targetNode); // Section 10
     },
 
-    // =============================================================================
+    // 
     //  7. CONNECTING TWO NODES
-    // =============================================================================
+    // 
     _handleConnectNodes: (nodeId) => {
         if (!App.AdminEditor.editMode.firstNodeId) {
             App.AdminEditor.editMode.firstNodeId = nodeId;
@@ -373,9 +373,9 @@ App.AdminEditor = {
         }
     },
 
-    // =============================================================================
+    // 
     //  8. DISCONNECTING TWO NODES
-    // =============================================================================
+    // 
     _handleDisconnectNode: (targetNode) => {
         if (!App.AdminEditor.editMode.firstNodeId) {
             App.AdminEditor.editMode.firstNodeId = targetNode.id;
@@ -390,9 +390,9 @@ App.AdminEditor = {
         }
     },
 
-    // =============================================================================
+    // 
     //  9. DELETING A NODE
-    // =============================================================================
+    // 
     _handleDeleteNode: (nodeId) => {
         if (!confirm('Delete node?')) return;
         App.mapData.nodes = App.mapData.nodes.filter(n => n.id !== nodeId);
@@ -402,9 +402,9 @@ App.AdminEditor = {
         App.Renderer.populateSelectors();
     },
 
-    // =============================================================================
+    // 
     //  10. RENAMING A NODE
-    // =============================================================================
+    // 
     _handleRenameNode: (targetNode) => {
         const newName = prompt("Rename:", targetNode.name);
         if (newName) {
@@ -414,9 +414,9 @@ App.AdminEditor = {
         }
     },
 
-    // =============================================================================
+    // 
     //  11. SPLITTING AN EDGE
-    // =============================================================================
+    // 
     handleEdgeClick: (evt, edge) => {
         if (!App.AdminEditor.editMode.mode) {
              const pos = App.AdminEditor.getMousePosition(evt);
@@ -440,9 +440,9 @@ App.AdminEditor = {
         }
     },
 
-    // =============================================================================
+    // 
     //  12. ADDING A NEW FLOOR
-    // =============================================================================
+    // 
     handleAddNewFloor: () => {
         const existing = new Set(App.mapData.nodes.map(n => n.floor));
         const newFloor = existing.size ? Math.max(...existing) + 1 : 1;
@@ -453,9 +453,9 @@ App.AdminEditor = {
         App.Renderer.switchFloor(newFloor);
     },
 
-    // =============================================================================
+    // 
     //  13. DELETING A FLOOR
-    // =============================================================================
+    // 
     handleDeleteFloor: () => {
         if(!confirm("Delete current floor?")) return;
         const f = App.State.currentFloor;
@@ -466,9 +466,9 @@ App.AdminEditor = {
         App.Renderer.switchFloor(1);
     },
 
-    // =============================================================================
+    // 
     //  14. SETTING FLOOR LABEL
-    // =============================================================================
+    // 
     handleSetFloorLabel: () => {
         const l = prompt("Label:", App.mapData.floorLabels?.[App.State.currentFloor] || "");
         if(l) {
@@ -478,9 +478,9 @@ App.AdminEditor = {
         }
     },
 
-    // =============================================================================
+    // 
     //  15. SAVING TO DATABASE
-    // =============================================================================
+    //
     handleSaveMapToDatabase: () => {
         const btn = document.getElementById('saveToDbBtn');
         const original = btn.textContent;
@@ -494,9 +494,9 @@ App.AdminEditor = {
         }).catch(err => { console.error(err); btn.textContent = original; });
     },
 
-    // =============================================================================
+    // 
     //  16. EXPORTING MAP AS JSON
-    // =============================================================================
+    // 
     handleExportMapData: () => {
         const a = document.createElement('a');
         a.href = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(App.mapData));
@@ -506,9 +506,9 @@ App.AdminEditor = {
         document.body.removeChild(a);
     },
 
-    // =============================================================================
+    // 
     //  17. IMPORTING MAP FROM JSON
-    // =============================================================================
+    // 
     handleImportMapData: (e) => {
         const r = new FileReader();
         r.onload = (ev) => {
@@ -527,9 +527,9 @@ App.AdminEditor = {
         r.readAsText(e.target.files[0]);
     },
 
-    // =============================================================================
+    // 
     //  18. UPLOADING FLOOR PLAN IMAGE
-    // =============================================================================
+    //
     handleUploadFloorImage: async (e) => {
         e.preventDefault();
         const f = document.getElementById('floorImageInput').files[0];
@@ -541,9 +541,9 @@ App.AdminEditor = {
         location.reload();
     },
 
-    // =============================================================================
+    // 
     //  19. OPENING SETTINGS / CUSTOMIZING SHORTCUTS
-    // =============================================================================
+    // 
     loadShortcuts: () => {
         const stored = localStorage.getItem('bravo_shortcuts');
         App.AdminEditor.shortcuts = stored ? JSON.parse(stored) : { ...App.AdminEditor.defaultShortcuts };
@@ -634,9 +634,9 @@ App.AdminEditor = {
         setTimeout(() => document.addEventListener('click', cancelHandler, {once:true}), 100);
     },
 
-    // =============================================================================
+    // 
     //  20. CANCELLING / EXITING A MODE
-    // =============================================================================
+    // 
     handleKeyDown: (e) => {
         if (['INPUT', 'TEXTAREA'].includes(e.target.tagName)) return;
         if (e.key === 'Shift') App.AdminEditor.shiftPressed = true;
